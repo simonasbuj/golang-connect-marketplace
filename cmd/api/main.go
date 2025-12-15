@@ -6,13 +6,17 @@ import (
 	"golang-connect-marketplace/internal/auth/http/routes"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 func main() {
 	e := echo.New()
 
-	authHandler := handlers.NewAuthHandler()
+	authHandler := handlers.NewHandler()
 	routes.RegisterRoutes(e, authHandler)
 
-	e.Start(":6767")
+	err := e.Start(":6767")
+	if err != nil {
+		log.Error(err)
+	}
 }

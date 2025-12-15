@@ -19,6 +19,13 @@ linters:
           - json
           - form
   exclusions:
+    rules:
+    - path: internal/auth/http/handlers # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it
+      linters:
+        - wrapcheck
+    - path: pkg/responses
+      linters:
+        - wrapcheck
     generated: lax
 formatters:
   enable:

@@ -1,3 +1,4 @@
+// Package handlers defines HTTP handlers for application auth endpoints.
 package handlers
 
 import (
@@ -6,20 +7,25 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type AuthHandler struct{}
+// Handler handles authentication-related HTTP requests.
+type Handler struct{}
 
-func NewAuthHandler() *AuthHandler {
-	return &AuthHandler{}
+// NewHandler creates a new Handler for handling authentication requests.
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
-func (h *AuthHandler) HandleRegister(c echo.Context) error {
+// HandleRegister handles requests to register user.
+func (h *Handler) HandleRegister(c echo.Context) error {
 	return responses.JSONSuccess(c, "going to register", nil)
 }
 
-func (h *AuthHandler) HandleLogin(c echo.Context) error {
+// HandleLogin handles requests to login user.
+func (h *Handler) HandleLogin(c echo.Context) error {
 	return responses.JSONSuccess(c, "going to login", nil)
 }
 
-func (h *AuthHandler) HandleRefresh(c echo.Context) error {
+// HandleRefresh handles requests to refresh token.
+func (h *Handler) HandleRefresh(c echo.Context) error {
 	return responses.JSONSuccess(c, "going to refresh token", nil)
 }
