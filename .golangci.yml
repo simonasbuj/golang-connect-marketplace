@@ -1,0 +1,31 @@
+version: "2"
+run:
+  tests: true
+linters:
+  default: all
+  disable:
+    - depguard # dont understand tbh, just doesnt let to import external packages in internal/*/*.go files
+    - testpackage # forces to add _test prefix to package names in _test.go files, but how to test private functions then?
+    - varnamelen # 'e' and 'c' are echo convetions for app and ctx var names, but this lint keeps complaining
+    - wsl # deprecated since v2.2.0
+  settings:
+    tagliatelle:
+      case:
+        rules:
+          yaml: snake
+          json: snake
+    tagalign:
+      order:
+          - json
+          - form
+  exclusions:
+    generated: lax
+formatters:
+  enable:
+    # - gci # not compatible with goimports and gofumpt, tries to change imports in different way.
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+  exclusions:
+    generated: lax
