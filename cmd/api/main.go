@@ -2,18 +2,17 @@
 package main
 
 import (
-	"log"
-	"time"
+	"golang-connect-marketplace/internal/auth/http/handlers"
+	"golang-connect-marketplace/internal/auth/http/routes"
+
+	"github.com/labstack/echo/v4"
 )
 
-const timeOutSeconds = 2
-
 func main() {
-	count := 0
-	for {
-		log.Printf("this is going to be awesome: %d\n", count)
-		count++
+	e := echo.New()
 
-		time.Sleep(time.Second * timeOutSeconds)
-	}
+	authHandler := handlers.NewAuthHandler()
+	routes.RegisterRoutes(e, authHandler)
+
+	e.Start(":6767")
 }

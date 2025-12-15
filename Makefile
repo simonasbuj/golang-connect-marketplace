@@ -26,3 +26,10 @@ lint-fix:
 .PHONY: test
 test:
 	go test -v ./...
+
+# database
+start-postgres:
+	docker-compose -p go-marketplace -f infra/docker/postgres-docker-compose.yml up -d --build
+
+stop-postgres:
+	docker-compose -p go-marketplace -f infra/docker/postgres-docker-compose.yml stop
