@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS auth.refresh_tokens (
 
 -- +goose Down
 -- +goose StatementBegin
+DROP TABLE IF EXISTS auth.refresh_tokens;
 DROP TABLE IF EXISTS auth.users;
 DROP TYPE IF EXISTS auth.user_role;
 DROP SCHEMA IF EXISTS auth;

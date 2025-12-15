@@ -42,7 +42,7 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 		)
 	}
 
-	return responses.JSONSuccess(c, "going to register", respDto)
+	return responses.JSONSuccess(c, "new user registered", respDto)
 }
 
 // HandleLogin handles requests to login user.

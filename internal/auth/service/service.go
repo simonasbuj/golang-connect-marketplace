@@ -5,21 +5,25 @@ import (
 	"context"
 	"fmt"
 	"golang-connect-marketplace/internal/auth/dto"
-	"golang-connect-marketplace/pkg/generate"
+	"golang-connect-marketplace/internal/auth/repo"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Service provides user and auth related operations.
-type Service struct{}
+type Service struct {
+	repo repo.Repo
+}
 
-// NewService creates a new Service instance.
-func NewService() *Service {
-	return &Service{}
+// New creates a new Service instance.
+func New(repo repo.Repo) *Service {
+	return &Service{
+		repo: repo,
+	}
 }
 
 // Register handles logic for creating new user.
-func (s *Service) Register(_ context.Context, reqDto *dto.RegisterRequest) (*dto.User, error) {
+func (s *Service) Register(ctx context.Context, reqDto *dto.RegisterRequest) (*dto.User, error) {
 	hashedPw, err := s.hashPassword(reqDto.Password)
 	if err != nil {
 		return nil, err
@@ -27,11 +31,9 @@ func (s *Service) Register(_ context.Context, reqDto *dto.RegisterRequest) (*dto
 
 	reqDto.Password = hashedPw
 
-	respDto := &dto.User{
-		ID:       generate.ID("user"),
-		Email:    reqDto.Email,
-		Name:     reqDto.Name,
-		Lastname: reqDto.Lastname,
+	respDto, err := s.repo.Create(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("creating new user: %w", err)
 	}
 
 	return respDto, nil

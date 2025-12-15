@@ -5,14 +5,18 @@ import (
 	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/http/handlers"
 	"golang-connect-marketplace/internal/auth/http/routes"
-	"golang-connect-marketplace/internal/auth/service"
+	authRepo "golang-connect-marketplace/internal/auth/repo"
+	authSvc "golang-connect-marketplace/internal/auth/service"
 	"golang-connect-marketplace/pkg/middleware"
 	"log/slog"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -29,10 +33,25 @@ func main() {
 		ReplaceAttr: nil,
 	}))
 
+	db, err := sqlx.Connect(
+		"postgres",
+		"postgres://postgres:postgres@localhost/marketplace?sslmode=disable",
+	)
+	if err != nil {
+		logger.Error("failed to connect to database", "error", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		logger.Error("failed to ping database", "error", err)
+	}
+
+	logger.Info("connected to database")
+
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
 
-	setupAuth(e)
+	setupAuth(e, db)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -40,8 +59,9 @@ func main() {
 	}
 }
 
-func setupAuth(e *echo.Echo) {
-	svc := service.NewService()
+func setupAuth(e *echo.Echo, db *sqlx.DB) {
+	repo := authRepo.New(db)
+	svc := authSvc.New(repo)
 	hndl := handlers.NewHandler(svc)
 	routes.RegisterRoutes(e, hndl)
 }
