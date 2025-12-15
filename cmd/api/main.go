@@ -5,7 +5,7 @@ import (
 	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/http/handlers"
 	"golang-connect-marketplace/internal/auth/http/routes"
-	"golang-connect-marketplace/internal/service"
+	"golang-connect-marketplace/internal/auth/service"
 	"golang-connect-marketplace/pkg/middleware"
 	"log/slog"
 	"os"

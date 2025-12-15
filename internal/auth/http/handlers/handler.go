@@ -3,7 +3,7 @@ package handlers
 
 import (
 	"golang-connect-marketplace/internal/auth/dto"
-	"golang-connect-marketplace/internal/service"
+	"golang-connect-marketplace/internal/auth/service"
 	"golang-connect-marketplace/pkg/responses"
 	"golang-connect-marketplace/pkg/validation"
 	"net/http"
