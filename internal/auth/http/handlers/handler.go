@@ -2,7 +2,9 @@
 package handlers
 
 import (
+	"errors"
 	"golang-connect-marketplace/internal/auth/dto"
+	"golang-connect-marketplace/internal/auth/middleware"
 	"golang-connect-marketplace/internal/auth/service"
 	"golang-connect-marketplace/pkg/responses"
 	"golang-connect-marketplace/pkg/validation"
@@ -64,10 +66,41 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		)
 	}
 
-	return responses.JSONSuccess(c, "going to login", respDto)
+	return responses.JSONSuccess(c, "user logged in successfully", respDto)
 }
 
 // HandleRefresh handles requests to refresh token.
 func (h *Handler) HandleRefresh(c echo.Context) error {
-	return responses.JSONSuccess(c, "going to refresh token", nil)
+	var reqDto dto.RefreshTokenRequest
+
+	err := validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.RefreshToken(c.Request().Context(), &reqDto)
+	if err != nil {
+		if errors.Is(err, service.ErrUnauthorized) {
+			return responses.JSONError(c, "unauthorized", err)
+		}
+
+		return responses.JSONError(
+			c,
+			"failed to refresh token",
+			err,
+			http.StatusInternalServerError,
+		)
+	}
+
+	return responses.JSONSuccess(c, "refreshed tokens successfully", respDto)
+}
+
+// HandleSecret handles auth middleware debugging.
+func (h *Handler) HandleSecret(c echo.Context) error {
+	userClaims, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	return responses.JSONSuccess(c, "can access", userClaims)
 }

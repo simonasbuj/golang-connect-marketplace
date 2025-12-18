@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/dto"
@@ -13,6 +14,17 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	// ErrUnauthorized is returned when user is unauthorized.
+	ErrUnauthorized = errors.New("unauthorized")
+	// ErrMissingSubClaim is returned when jwt token is missing sub claim.
+	ErrMissingSubClaim = errors.New("token is missing sub claim")
+	// ErrMissingRoleClaim is returned when jwt token is missing role claim.
+	ErrMissingRoleClaim = errors.New("token is missing role claim")
+	// ErrParsingJWTClaims is returned when parsing jwt claims fails.
+	ErrParsingJWTClaims = errors.New("failed to parse jwt token claims")
 )
 
 // Service provides user and auth related operations.
@@ -80,6 +92,86 @@ func (s *Service) Login(ctx context.Context, reqDto *dto.LoginRequest) (*dto.Log
 	}
 
 	return respDto, nil
+}
+
+// RefreshToken handles logic for refreshing token for user.
+func (s *Service) RefreshToken(
+	ctx context.Context,
+	reqDto *dto.RefreshTokenRequest,
+) (*dto.LoginResponse, error) {
+	t, err := s.repo.GetRefreshToken(ctx, reqDto.RefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("fetching current refresh token from database: %w", err)
+	}
+
+	if t.ExpiresAt.Before(time.Now()) {
+		return nil, ErrUnauthorized
+	}
+
+	user, err := s.repo.GetUserByID(ctx, t.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching user: %w", err)
+	}
+
+	accessToken, err := s.generateJWT(user, s.cfg.TokenValidSeconds)
+	if err != nil {
+		return nil, fmt.Errorf("generating access token: %w", err)
+	}
+
+	refreshToken := &dto.RefreshToken{
+		Token:     strings.Trim(generate.ID("", s.cfg.RefreshTokenLength), "_"),
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(time.Duration(s.cfg.RefreshTokenValidSeconds) * time.Second),
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("saving refresh token: %w", err)
+	}
+
+	err = s.repo.DeleteRefreshToken(ctx, reqDto.RefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("deleting previous refresh token: %w", err)
+	}
+
+	respDto := &dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken.Token,
+	}
+
+	return respDto, nil
+}
+
+// ParseJWT parses and validates provided jwt token string.
+func (s *Service) ParseJWT(tokenStr string) (*dto.UserClaims, error) {
+	token, err := jwt.Parse(tokenStr, func(_ *jwt.Token) (interface{}, error) {
+		return []byte(s.cfg.Secret), nil
+	})
+	if err != nil || !token.Valid {
+		return nil, fmt.Errorf("parsing and validating token: %w", err)
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, ErrParsingJWTClaims
+	}
+
+	id, ok := claims["sub"].(string)
+	if !ok {
+		return nil, ErrMissingSubClaim
+	}
+
+	role, ok := claims["role"].(string)
+	if !ok {
+		return nil, ErrMissingRoleClaim
+	}
+
+	userClaims := &dto.UserClaims{
+		ID:   id,
+		Role: dto.UserRole(role),
+	}
+
+	return userClaims, nil
 }
 
 func (s *Service) hashPassword(password string) (string, error) {

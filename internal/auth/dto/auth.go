@@ -58,3 +58,8 @@ type RefreshToken struct {
 	UserID    string    `db:"user_id"`
 	ExpiresAt time.Time `db:"expires_at"`
 }
+
+// RefreshTokenRequest represents payload sent when requesting to refresh tokens.
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}

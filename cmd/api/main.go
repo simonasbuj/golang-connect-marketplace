@@ -60,5 +60,5 @@ func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) {
 	repo := authRepo.New(db)
 	svc := authSvc.New(repo, cfg)
 	hndl := handlers.NewHandler(svc)
-	routes.RegisterRoutes(e, hndl)
+	routes.RegisterRoutes(e, hndl, svc)
 }

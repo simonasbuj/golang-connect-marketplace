@@ -3,15 +3,19 @@ package routes
 
 import (
 	"golang-connect-marketplace/internal/auth/http/handlers"
+	"golang-connect-marketplace/internal/auth/middleware"
+	"golang-connect-marketplace/internal/auth/service"
 
 	"github.com/labstack/echo/v4"
 )
 
 // RegisterRoutes registers authentication-related HTTP routes.
-func RegisterRoutes(e *echo.Echo, h *handlers.Handler) {
+func RegisterRoutes(e *echo.Echo, h *handlers.Handler, authSvc *service.Service) {
 	auth := e.Group("api/v1/auth")
 
 	auth.POST("/register", h.HandleRegister)
 	auth.POST("/login", h.HandleLogin)
 	auth.POST("/refresh", h.HandleRefresh)
+
+	auth.GET("/secret", h.HandleSecret, middleware.AuthenticateMiddleware(authSvc))
 }
