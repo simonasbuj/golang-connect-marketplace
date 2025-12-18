@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     password_hash VARCHAR(60) NOT NULL,
     name VARCHAR(100) NOT NULL,
     lastname VARCHAR(100) NOT NULL,
+    username VARCHAR(40) NOT NULL,
     role auth.user_role DEFAULT 'customer' NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -33,10 +33,7 @@ func main() {
 		ReplaceAttr: nil,
 	}))
 
-	db, err := sqlx.Connect(
-		"postgres",
-		"postgres://postgres:postgres@localhost/marketplace?sslmode=disable",
-	)
+	db, err := sqlx.Connect(cfg.DBConfig.DriverName, cfg.DBConfig.URI)
 	if err != nil {
 		logger.Error("failed to connect to database", "error", err)
 	}
@@ -51,7 +48,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
 
-	setupAuth(e, db)
+	setupAuth(e, db, &cfg.AuthConfig)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -59,9 +56,9 @@ func main() {
 	}
 }
 
-func setupAuth(e *echo.Echo, db *sqlx.DB) {
+func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) {
 	repo := authRepo.New(db)
-	svc := authSvc.New(repo)
+	svc := authSvc.New(repo, cfg)
 	hndl := handlers.NewHandler(svc)
 	routes.RegisterRoutes(e, hndl)
 }

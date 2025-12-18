@@ -47,7 +47,24 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 
 // HandleLogin handles requests to login user.
 func (h *Handler) HandleLogin(c echo.Context) error {
-	return responses.JSONSuccess(c, "going to login", nil)
+	var reqDto dto.LoginRequest
+
+	err := validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.Login(c.Request().Context(), &reqDto)
+	if err != nil {
+		return responses.JSONError(
+			c,
+			"failed to login user",
+			err,
+			http.StatusInternalServerError,
+		)
+	}
+
+	return responses.JSONSuccess(c, "going to login", respDto)
 }
 
 // HandleRefresh handles requests to refresh token.
