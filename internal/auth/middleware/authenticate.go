@@ -19,7 +19,10 @@ const userContextKey = "user"
 
 // AuthenticateMiddleware checks if token provided in Authorization header is valid
 // and saves UserClaims in echo context.
-func AuthenticateMiddleware(svc *service.Service) echo.MiddlewareFunc {
+func AuthenticateMiddleware(
+	svc *service.Service,
+	allowedRoles ...dto.UserRole,
+) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			auth := c.Request().Header.Get("Authorization")
@@ -41,6 +44,15 @@ func AuthenticateMiddleware(svc *service.Service) echo.MiddlewareFunc {
 					"invalid token",
 					err,
 					http.StatusUnauthorized,
+				)
+			}
+
+			if len(allowedRoles) > 0 && userClaims.Role != allowedRoles[0] {
+				return responses.JSONError(
+					c,
+					"forbidden: insufficient permissions",
+					service.ErrForbidden,
+					http.StatusForbidden,
 				)
 			}
 

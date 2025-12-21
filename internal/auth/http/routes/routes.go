@@ -2,6 +2,7 @@
 package routes
 
 import (
+	"golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/auth/http/handlers"
 	"golang-connect-marketplace/internal/auth/middleware"
 	"golang-connect-marketplace/internal/auth/service"
@@ -18,4 +19,9 @@ func RegisterRoutes(e *echo.Echo, h *handlers.Handler, authSvc *service.Service)
 	auth.POST("/refresh", h.HandleRefresh)
 
 	auth.GET("/secret", h.HandleSecret, middleware.AuthenticateMiddleware(authSvc))
+	auth.GET(
+		"/secret-admin",
+		h.HandleSecret,
+		middleware.AuthenticateMiddleware(authSvc, dto.UserRoleAdmin),
+	)
 }
