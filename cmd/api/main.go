@@ -9,6 +9,7 @@ import (
 	authSvc "golang-connect-marketplace/internal/auth/service"
 	marketHndl "golang-connect-marketplace/internal/marketplace/http/handlers"
 	marketRoutes "golang-connect-marketplace/internal/marketplace/http/routes"
+	marketRepos "golang-connect-marketplace/internal/marketplace/repos"
 	marketSvc "golang-connect-marketplace/internal/marketplace/services"
 	"golang-connect-marketplace/pkg/middleware"
 	"log/slog"
@@ -69,8 +70,9 @@ func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) *authSvc.Servi
 	return svc
 }
 
-func setupListings(e *echo.Echo, _ *sqlx.DB, authSvc *authSvc.Service) {
-	svc := marketSvc.NewListingsService()
+func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service) {
+	repo := marketRepos.NewListingsRepo(db)
+	svc := marketSvc.NewListingsService(repo)
 	hndl := marketHndl.NewListingsHandler(svc)
 	marketRoutes.RegisterRoutes(e, hndl, authSvc)
 }
