@@ -15,13 +15,14 @@ CREATE TABLE IF NOT EXISTS auth.users (
     lastname VARCHAR(100) NOT NULL,
     username VARCHAR(40) NOT NULL,
     role auth.user_role DEFAULT 'customer' NOT NULL,
+    seller_id TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS auth.refresh_tokens (
-    token TEXT PRIMARY KEY,
+    token VARCHAR(30) PRIMARY KEY,
     user_id VARCHAR(30) REFERENCES auth.users(id),
     expires_at TIMESTAMPTZ NOT NULL
 )

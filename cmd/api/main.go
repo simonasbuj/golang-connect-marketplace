@@ -3,10 +3,13 @@ package main
 
 import (
 	"golang-connect-marketplace/config"
-	"golang-connect-marketplace/internal/auth/http/handlers"
-	"golang-connect-marketplace/internal/auth/http/routes"
+	authHndl "golang-connect-marketplace/internal/auth/http/handlers"
+	authRoutes "golang-connect-marketplace/internal/auth/http/routes"
 	authRepo "golang-connect-marketplace/internal/auth/repo"
 	authSvc "golang-connect-marketplace/internal/auth/service"
+	marketHndl "golang-connect-marketplace/internal/marketplace/http/handlers"
+	marketRoutes "golang-connect-marketplace/internal/marketplace/http/routes"
+	marketSvc "golang-connect-marketplace/internal/marketplace/services"
 	"golang-connect-marketplace/pkg/middleware"
 	"log/slog"
 	"os"
@@ -48,7 +51,8 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
 
-	setupAuth(e, db, &cfg.AuthConfig)
+	authSvc := setupAuth(e, db, &cfg.AuthConfig)
+	setupListings(e, db, authSvc)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -56,9 +60,17 @@ func main() {
 	}
 }
 
-func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) {
+func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) *authSvc.Service {
 	repo := authRepo.New(db)
 	svc := authSvc.New(repo, cfg)
-	hndl := handlers.NewHandler(svc)
-	routes.RegisterRoutes(e, hndl, svc)
+	hndl := authHndl.NewHandler(svc)
+	authRoutes.RegisterRoutes(e, hndl, svc)
+
+	return svc
+}
+
+func setupListings(e *echo.Echo, _ *sqlx.DB, authSvc *authSvc.Service) {
+	svc := marketSvc.NewListingsService()
+	hndl := marketHndl.NewListingsHandler(svc)
+	marketRoutes.RegisterRoutes(e, hndl, authSvc)
 }

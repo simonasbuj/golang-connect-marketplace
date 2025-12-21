@@ -19,6 +19,8 @@ import (
 var (
 	// ErrUnauthorized is returned when user is unauthorized.
 	ErrUnauthorized = errors.New("unauthorized")
+	// ErrForbidden is returned when user lacks required role.
+	ErrForbidden = errors.New("forbidden")
 	// ErrMissingSubClaim is returned when jwt token is missing sub claim.
 	ErrMissingSubClaim = errors.New("token is missing sub claim")
 	// ErrMissingRoleClaim is returned when jwt token is missing role claim.

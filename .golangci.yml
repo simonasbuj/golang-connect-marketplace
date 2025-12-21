@@ -23,6 +23,9 @@ linters:
     - path: internal/auth/http/handlers # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it
       linters:
         - wrapcheck
+    - path: internal/marketplace/http/handlers
+      linters:
+        - wrapcheck
     - path: pkg/responses
       linters:
         - wrapcheck
