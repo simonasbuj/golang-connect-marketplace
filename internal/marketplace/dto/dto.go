@@ -1,7 +1,10 @@
 // Package dto contains data transfer objects used for API requests/responses.
 package dto
 
-import "time"
+import (
+	"mime/multipart"
+	"time"
+)
 
 // Category represents category model.
 type Category struct {
@@ -36,4 +39,11 @@ type Listing struct {
 	Status       ListingStatus `json:"status"         db:"status"`
 	CreatedAt    time.Time     `json:"created_at"     db:"created_at"`
 	UpdatedAt    time.Time     `json:"updated_at"     db:"updated_at"`
+}
+
+// AddImagesRequest represents payload sent when adding new images for a listing.
+type AddImagesRequest struct {
+	UserID      string                 `validate:"required"`
+	ListingID   string                 `validate:"required,min=30"`
+	FileHeaders []multipart.FileHeader `validate:"required"        form:"images"`
 }

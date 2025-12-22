@@ -18,6 +18,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 
 	_ "github.com/lib/pq"
@@ -51,6 +52,7 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
+	e.Use(echoMiddleware.BodyLimit(cfg.APIConfig.MaxPayloadSize))
 
 	authSvc := setupAuth(e, db, &cfg.AuthConfig)
 	setupListings(e, db, authSvc)

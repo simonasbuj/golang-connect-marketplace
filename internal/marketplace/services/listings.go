@@ -3,11 +3,15 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	authDto "golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/marketplace/dto"
 	"golang-connect-marketplace/internal/marketplace/repos"
 )
+
+// ErrForbidden is returned when user is not allowed to do some actions.
+var ErrForbidden = errors.New("user is forbidden to do this action")
 
 // ListingsService provides user and auth related operations.
 type ListingsService struct {
@@ -58,4 +62,14 @@ func (s *ListingsService) CreateListing(
 	}
 
 	return resp, nil
+}
+
+// AddImages handles logic for adding images to listing.
+func (s *ListingsService) AddImages(ctx context.Context, req *dto.AddImagesRequest) error {
+	err := s.repo.CheckIfUserOwnsListing(ctx, req.ListingID, req.UserID)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrForbidden, err)
+	}
+
+	return nil
 }

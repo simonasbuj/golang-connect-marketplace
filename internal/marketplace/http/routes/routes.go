@@ -17,6 +17,11 @@ func RegisterRoutes(e *echo.Echo, h *handlers.ListingsHandler, authSvc *service.
 
 	listings.GET("", h.HandleGetListings)
 	listings.POST("", h.HandleCreateListing, middleware.AuthenticateMiddleware(authSvc))
+	listings.POST(
+		"/:listing_id/images",
+		h.HandleAddImages,
+		middleware.AuthenticateMiddleware(authSvc),
+	)
 
 	cats.POST(
 		"",

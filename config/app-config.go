@@ -16,7 +16,8 @@ type DBConfig struct {
 
 // APIConfig holds settings for API.
 type APIConfig struct {
-	HTTPAddress string `env:"MARKET_HTTP_ADDRESS"`
+	HTTPAddress    string `env:"MARKET_HTTP_ADDRESS"`
+	MaxPayloadSize string `env:"MARKET_MAX_PAYLOAD_SIZE"`
 }
 
 // AuthConfig holds settings and secrets for auth.

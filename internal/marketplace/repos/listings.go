@@ -19,6 +19,7 @@ type ListingsRepo interface {
 	CreateCategory(ctx context.Context, req *dto.Category) (*dto.Category, error)
 	GetCategories(ctx context.Context) ([]dto.Category, error)
 	CreateListing(ctx context.Context, req *dto.Listing) (*dto.Listing, error)
+	CheckIfUserOwnsListing(ctx context.Context, listingID, userID string) error
 }
 
 type listingsRepo struct {
@@ -111,4 +112,21 @@ func (r *listingsRepo) CreateListing(ctx context.Context, req *dto.Listing) (*dt
 	}
 
 	return &resp, nil
+}
+
+func (r *listingsRepo) CheckIfUserOwnsListing(ctx context.Context, listingID, userID string) error {
+	query := `
+		SELECT 1
+		FROM listings.listings
+		WHERE id = $1 and user_id = $2
+	`
+
+	var exists int
+
+	err := r.db.GetContext(ctx, &exists, query, listingID, userID)
+	if err != nil {
+		return fmt.Errorf("confirming if user owns listing in database: %w", err)
+	}
+
+	return nil
 }
