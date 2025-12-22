@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"golang-connect-marketplace/internal/auth/middleware"
 	"golang-connect-marketplace/internal/marketplace/dto"
 	"golang-connect-marketplace/internal/marketplace/services"
 	"golang-connect-marketplace/pkg/responses"
@@ -57,7 +58,29 @@ func (h *ListingsHandler) HandleGetCategories(c echo.Context) error {
 
 // HandleCreateListing handles requests to create new listing.
 func (h *ListingsHandler) HandleCreateListing(c echo.Context) error {
-	return responses.JSONSuccess(c, "created new item", nil)
+	userClaims, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.Listing
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	resp, err := h.svc.CreateListing(c.Request().Context(), userClaims, &reqDto)
+	if err != nil {
+		return responses.JSONError(
+			c,
+			"failed to create listing",
+			err,
+			http.StatusInternalServerError,
+		)
+	}
+
+	return responses.JSONSuccess(c, "created new listing", resp)
 }
 
 // HandleGetListings handles requests to get a list of listings.

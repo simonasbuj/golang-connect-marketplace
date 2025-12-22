@@ -4,8 +4,9 @@ CREATE SCHEMA IF NOT EXISTS listings;
 
 CREATE TYPE listings.listing_status AS ENUM (
     'open',
-    'completed',
-    'canceled'
+    'sold',
+    'canceled',
+    'refunded'
 );
 
 CREATE TABLE IF NOT EXISTS listings.categories (
@@ -24,6 +25,8 @@ CREATE TABLE IF NOT EXISTS listings.listings (
     category_id VARCHAR(30)
         REFERENCES listings.categories(id)
         ON DELETE SET NULL,
+    title VARCHAR(100) NOT NULL,
+    description TEXT NOT NULL,
     price_in_cents INTEGER NOT NULL,
     currency VARCHAR(3) NOT NULL,
     status listings.listing_status NOT NULL DEFAULT 'open',

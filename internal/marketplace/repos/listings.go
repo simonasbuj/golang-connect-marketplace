@@ -14,12 +14,11 @@ import (
 // ErrNoRowsReturned is returned if database query returns no results.
 var ErrNoRowsReturned = errors.New("no rows returned")
 
-const categoryIDLength = 26
-
 // ListingsRepo defines methods for accessing and managing listings data.
 type ListingsRepo interface {
 	CreateCategory(ctx context.Context, req *dto.Category) (*dto.Category, error)
 	GetCategories(ctx context.Context) ([]dto.Category, error)
+	CreateListing(ctx context.Context, req *dto.Listing) (*dto.Listing, error)
 }
 
 type listingsRepo struct {
@@ -35,7 +34,7 @@ func (r *listingsRepo) CreateCategory(
 	ctx context.Context,
 	req *dto.Category,
 ) (*dto.Category, error) {
-	req.ID = generate.ID("cat", categoryIDLength)
+	req.ID = generate.ID("cat")
 
 	query := `
 		INSERT INTO listings.categories (id, title, description) 
@@ -66,7 +65,7 @@ func (r *listingsRepo) CreateCategory(
 }
 
 func (r *listingsRepo) GetCategories(ctx context.Context) ([]dto.Category, error) {
-	var categories []dto.Category
+	categories := []dto.Category{}
 
 	query := `
 		SELECT id, title, description
@@ -77,8 +76,39 @@ func (r *listingsRepo) GetCategories(ctx context.Context) ([]dto.Category, error
 
 	err := r.db.SelectContext(ctx, &categories, query)
 	if err != nil {
-		return nil, fmt.Errorf("fetching categories fropm database: %w", err)
+		return nil, fmt.Errorf("fetching categories from database: %w", err)
 	}
 
 	return categories, nil
+}
+
+func (r *listingsRepo) CreateListing(ctx context.Context, req *dto.Listing) (*dto.Listing, error) {
+	req.ID = generate.ID("item")
+
+	query := `
+		INSERT INTO listings.listings (id, user_id, category_id, title, description, price_in_cents, currency) 
+		VALUES (:id, :user_id, :category_id, :title, :description, :price_in_cents, :currency)
+		RETURNING id, user_id, category_id, title, description, price_in_cents, currency, status, created_at, updated_at
+	`
+
+	row, err := r.db.NamedQueryContext(ctx, query, req)
+	if err != nil {
+		return nil, fmt.Errorf("inserting new listing to database: %w", err)
+	}
+
+	defer func() { _ = row.Close() }()
+
+	ok := row.Next()
+	if !ok {
+		return nil, ErrNoRowsReturned
+	}
+
+	var resp dto.Listing
+
+	err = row.StructScan(&resp)
+	if err != nil {
+		return nil, fmt.Errorf("scanning inserted listing row into struct: %w", err)
+	}
+
+	return &resp, nil
 }
