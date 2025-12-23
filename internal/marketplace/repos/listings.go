@@ -20,6 +20,7 @@ type ListingsRepo interface {
 	GetCategories(ctx context.Context) ([]dto.Category, error)
 	CreateListing(ctx context.Context, req *dto.Listing) (*dto.Listing, error)
 	CheckIfUserOwnsListing(ctx context.Context, listingID, userID string) error
+	GetListingByID(ctx context.Context, listingID string) (*dto.Listing, error)
 }
 
 type listingsRepo struct {
@@ -129,4 +130,34 @@ func (r *listingsRepo) CheckIfUserOwnsListing(ctx context.Context, listingID, us
 	}
 
 	return nil
+}
+
+func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*dto.Listing, error) {
+	query := `
+		SELECT
+			l.*,
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'id', i.id,
+						'listing_id', i.listing_id,
+						'path', i.path
+					)
+				) FILTER (WHERE i.id IS NOT NULL),
+				'[]'
+			) AS images
+		FROM listings.listings l
+		LEFT JOIN listings.listings_images i ON i.listing_id = l.id
+		WHERE l.id = $1
+		GROUP BY l.id
+	`
+
+	var listing dto.Listing
+
+	err := r.db.GetContext(ctx, &listing, query, listingID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listing by id from database: %w", err)
+	}
+
+	return &listing, nil
 }

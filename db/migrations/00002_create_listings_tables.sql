@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS listings.listings (
 CREATE TABLE IF NOT EXISTS listings.listings_images (
     id VARCHAR(30) PRIMARY KEY,
     listing_id VARCHAR(30)
-        REFERENCES listings.categories(id)
+        REFERENCES listings.listings(id)
         ON DELETE SET NULL,
     path VARCHAR(200) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

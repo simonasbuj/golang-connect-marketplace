@@ -111,3 +111,15 @@ func (h *ListingsHandler) HandleAddImages(c echo.Context) error {
 func (h *ListingsHandler) HandleGetListings(c echo.Context) error {
 	return r.JSONSuccess(c, "fetched items", nil)
 }
+
+// HandleGetListing handles requests to get a listing by id.
+func (h *ListingsHandler) HandleGetListing(c echo.Context) error {
+	listingID := c.Param(listingIDParamName)
+
+	resp, err := h.svc.GetListingByID(c.Request().Context(), listingID)
+	if err != nil {
+		return r.JSONError(c, "failed to fetch listing", err, http.StatusInternalServerError)
+	}
+
+	return r.JSONSuccess(c, "fetched listing", resp)
+}

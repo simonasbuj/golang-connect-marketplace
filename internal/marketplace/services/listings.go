@@ -73,3 +73,16 @@ func (s *ListingsService) AddImages(ctx context.Context, req *dto.AddImagesReque
 
 	return nil
 }
+
+// GetListingByID handles logic for fetching listing by id.
+func (s *ListingsService) GetListingByID(
+	ctx context.Context,
+	listingID string,
+) (*dto.Listing, error) {
+	listing, err := s.repo.GetListingByID(ctx, listingID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listing: %w", err)
+	}
+
+	return listing, nil
+}

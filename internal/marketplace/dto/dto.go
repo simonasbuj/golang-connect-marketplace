@@ -2,6 +2,9 @@
 package dto
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"mime/multipart"
 	"time"
 )
@@ -37,8 +40,10 @@ type Listing struct {
 	PriceInCents int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1"`
 	Currency     string        `json:"currency"       db:"currency"       validate:"required,len=3"`
 	Status       ListingStatus `json:"status"         db:"status"`
+	Images       ListingImages `json:"images"         db:"images"`
 	CreatedAt    time.Time     `json:"created_at"     db:"created_at"`
 	UpdatedAt    time.Time     `json:"updated_at"     db:"updated_at"`
+	DeletedAt    *time.Time    `json:"deleted_at"     db:"deleted_at"`
 }
 
 // AddImagesRequest represents payload sent when adding new images for a listing.
@@ -46,4 +51,38 @@ type AddImagesRequest struct {
 	UserID      string                 `validate:"required"`
 	ListingID   string                 `validate:"required,min=30"`
 	FileHeaders []multipart.FileHeader `validate:"required"        form:"images"`
+}
+
+// ListingImage represents a single image belonging to a listing.
+type ListingImage struct {
+	ID        string `json:"id"`
+	ListingID string `json:"listing_id"`
+	Path      string `json:"path"`
+}
+
+// ListingImages represents a collection of listing images.
+type ListingImages []ListingImage
+
+// ErrInvalidListingImagesScanType is returned if scanning json into ListingImage fails.
+var ErrInvalidListingImagesScanType = errors.New("invalid type for ListingImages scan")
+
+// Scan implements sql.Scanner to decode JSON-aggregated images from the database.
+func (li *ListingImages) Scan(value any) error {
+	if value == nil {
+		*li = ListingImages{}
+
+		return nil
+	}
+
+	bytes, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("%w: %T", ErrInvalidListingImagesScanType, value)
+	}
+
+	err := json.Unmarshal(bytes, li)
+	if err != nil {
+		return fmt.Errorf("unmarshaling ListingImage dto: %w", err)
+	}
+
+	return nil
 }
