@@ -48,16 +48,16 @@ type Listing struct {
 
 // AddImagesRequest represents payload sent when adding new images for a listing.
 type AddImagesRequest struct {
-	UserID      string                 `validate:"required"`
-	ListingID   string                 `validate:"required,min=30"`
-	FileHeaders []multipart.FileHeader `validate:"required"        form:"images"`
+	UserID      string                 `form:"-"      validate:"required"`
+	ListingID   string                 `form:"-"      validate:"required,min=30"`
+	FileHeaders []multipart.FileHeader `form:"images" validate:"required"`
 }
 
 // DeleteImageRequest represents payload sent when deleting an images from a listing.
 type DeleteImageRequest struct {
-	UserID    string `validate:"required"`
-	ListingID string `validate:"required"`
-	ImageID   string `validate:"required,min=10" json:"image_id"`
+	UserID    string `json:"-"        validate:"required"`
+	ListingID string `json:"-"        validate:"required"`
+	ImageID   string `json:"image_id" validate:"required,min=10"`
 }
 
 // ListingImage represents a single image belonging to a listing.
