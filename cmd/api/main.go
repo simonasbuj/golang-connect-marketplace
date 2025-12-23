@@ -11,6 +11,7 @@ import (
 	marketRoutes "golang-connect-marketplace/internal/marketplace/http/routes"
 	marketRepos "golang-connect-marketplace/internal/marketplace/repos"
 	marketSvc "golang-connect-marketplace/internal/marketplace/services"
+	localStorage "golang-connect-marketplace/internal/marketplace/storage/local"
 	"golang-connect-marketplace/pkg/middleware"
 	"log/slog"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/labstack/gommon/log"
 
 	_ "github.com/lib/pq"
@@ -50,10 +52,13 @@ func main() {
 	logger.Info("connected to database")
 
 	e := echo.New()
+	e.Static(cfg.StorageConfig.UploadDir, cfg.StorageConfig.UploadDir)
+
 	e.Use(middleware.RequestLogger(logger))
+	e.Use(echoMiddleware.BodyLimit(cfg.APIConfig.MaxPayloadSize))
 
 	authSvc := setupAuth(e, db, &cfg.AuthConfig)
-	setupListings(e, db, authSvc)
+	setupListings(e, db, authSvc, &cfg.StorageConfig)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -70,9 +75,10 @@ func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) *authSvc.Servi
 	return svc
 }
 
-func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service) {
+func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service, cfg *config.StorageConfig) {
 	repo := marketRepos.NewListingsRepo(db)
-	svc := marketSvc.NewListingsService(repo)
+	storage := localStorage.NewLocalStorage(cfg.UploadDir)
+	svc := marketSvc.NewListingsService(repo, storage, cfg)
 	hndl := marketHndl.NewListingsHandler(svc)
 	marketRoutes.RegisterRoutes(e, hndl, authSvc)
 }

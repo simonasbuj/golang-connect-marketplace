@@ -18,6 +18,8 @@ linters:
       order:
           - json
           - form
+          - db
+          - validate
   exclusions:
     rules:
     - path: internal/auth/http/handlers # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it
