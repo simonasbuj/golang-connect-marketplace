@@ -22,6 +22,7 @@ type ListingsRepo interface {
 	CheckIfUserOwnsListing(ctx context.Context, listingID, userID string) error
 	GetListingByID(ctx context.Context, listingID string) (*dto.Listing, error)
 	AddListingImage(ctx context.Context, listingID, path string) (*dto.ListingImage, error)
+	DeleteListingImage(ctx context.Context, req *dto.DeleteImageRequest) error
 }
 
 type listingsRepo struct {
@@ -183,4 +184,18 @@ func (r *listingsRepo) AddListingImage(
 	}
 
 	return &img, nil
+}
+
+func (r *listingsRepo) DeleteListingImage(ctx context.Context, req *dto.DeleteImageRequest) error {
+	query := `
+		DELETE FROM listings.listings_images
+		WHERE listing_id = $1 and id = $2
+	`
+
+	_, err := r.db.ExecContext(ctx, query, req.ListingID, req.ImageID)
+	if err != nil {
+		return fmt.Errorf("deleting listing image from database: %w", err)
+	}
+
+	return nil
 }

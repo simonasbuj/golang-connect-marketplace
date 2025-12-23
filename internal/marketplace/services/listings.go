@@ -17,6 +17,8 @@ var (
 	ErrForbidden = errors.New("user is forbidden to do this action")
 	// ErrTooManyImages is returned when listing already has too many images.
 	ErrTooManyImages = errors.New("listing has too many images")
+	// ErrImageDoesntExist is returned when provided image id doesnt exist in listing.
+	ErrImageDoesntExist = errors.New("provided image doesn't exist in this listing")
 )
 
 // ListingsService provides user and auth related operations.
@@ -108,6 +110,50 @@ func (s *ListingsService) AddImages(
 		}
 
 		listing.Images = append(listing.Images, *listingImage)
+	}
+
+	return listing, nil
+}
+
+// DeleteImage handles logic for adding images to listing.
+func (s *ListingsService) DeleteImage(
+	ctx context.Context,
+	req *dto.DeleteImageRequest,
+) (*dto.Listing, error) {
+	listing, err := s.repo.GetListingByID(ctx, req.ListingID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listing: %w", err)
+	}
+
+	if listing.UserID != req.UserID {
+		return nil, ErrForbidden
+	}
+
+	doesImageExist := false
+	path := ""
+
+	for i, img := range listing.Images {
+		if img.ID == req.ImageID {
+			listing.Images = append(listing.Images[:i], listing.Images[i+1:]...)
+			doesImageExist = true
+			path = img.Path
+
+			break
+		}
+	}
+
+	if !doesImageExist {
+		return nil, ErrImageDoesntExist
+	}
+
+	err = s.storage.DeleteImage(ctx, path)
+	if err != nil {
+		return nil, fmt.Errorf("deleting image from storage: %w", err)
+	}
+
+	err = s.repo.DeleteListingImage(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("deleting image from database: %w", err)
 	}
 
 	return listing, nil

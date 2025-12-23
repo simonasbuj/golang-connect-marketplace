@@ -105,15 +105,37 @@ func (h *ListingsHandler) HandleAddImages(c echo.Context) error {
 			return r.JSONError(c, "listing has too many images", err)
 		}
 
-		return r.JSONError(
-			c,
-			"failed to add images to listing",
-			err,
-			http.StatusInternalServerError,
-		)
+		return r.JSONError(c, "failed to add images", err, http.StatusInternalServerError)
 	}
 
 	return r.JSONSuccess(c, "added images to listing", resp)
+}
+
+// HandleDeleteImages handles deleting image from a listing.
+func (h *ListingsHandler) HandleDeleteImages(c echo.Context) error {
+	userClaims, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	listingID := c.Param(listingIDParamName)
+
+	var reqDto dto.DeleteImageRequest
+
+	reqDto.UserID = userClaims.ID
+	reqDto.ListingID = listingID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return r.JSONError(c, err.Error(), err)
+	}
+
+	resp, err := h.svc.DeleteImage(c.Request().Context(), &reqDto)
+	if err != nil {
+		return r.JSONError(c, "failed to delete image", err)
+	}
+
+	return r.JSONSuccess(c, "deleted image from listing", resp)
 }
 
 // HandleGetListings handles requests to get a list of listings.

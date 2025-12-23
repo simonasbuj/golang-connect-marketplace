@@ -52,6 +52,8 @@ func main() {
 	logger.Info("connected to database")
 
 	e := echo.New()
+	e.Static(cfg.StorageConfig.UploadDir, cfg.StorageConfig.UploadDir)
+
 	e.Use(middleware.RequestLogger(logger))
 	e.Use(echoMiddleware.BodyLimit(cfg.APIConfig.MaxPayloadSize))
 

@@ -13,8 +13,10 @@ import (
 	"path/filepath"
 )
 
-// errPathIsEmpty         = errors.New("path is empty").
-var errUnsupportedFileType = errors.New("unsupported file type")
+var (
+	errPathIsEmpty         = errors.New("path is empty")
+	errUnsupportedFileType = errors.New("unsupported file type")
+)
 
 const (
 	uploadDirPerm          = 0o750
@@ -73,7 +75,20 @@ func (s *localStorage) StoreImage(
 }
 
 // DeleteImage deletes an image file from local path.
-func (s *localStorage) DeleteImage(_ context.Context, _ string) error {
+func (s *localStorage) DeleteImage(_ context.Context, path string) error {
+	if path == "" {
+		return errPathIsEmpty
+	}
+
+	err := os.Remove(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to delete file: %w", err)
+	}
+
 	return nil
 }
 

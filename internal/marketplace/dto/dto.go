@@ -53,6 +53,13 @@ type AddImagesRequest struct {
 	FileHeaders []multipart.FileHeader `validate:"required"        form:"images"`
 }
 
+// DeleteImageRequest represents payload sent when deleting an images from a listing.
+type DeleteImageRequest struct {
+	UserID    string `validate:"required"`
+	ListingID string `validate:"required"`
+	ImageID   string `validate:"required,min=10" json:"image_id"`
+}
+
 // ListingImage represents a single image belonging to a listing.
 type ListingImage struct {
 	ID        string `json:"id"         db:"id"`
