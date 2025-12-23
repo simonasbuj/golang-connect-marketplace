@@ -95,16 +95,25 @@ func (h *ListingsHandler) HandleAddImages(c echo.Context) error {
 		return r.JSONError(c, err.Error(), err)
 	}
 
-	err = h.svc.AddImages(c.Request().Context(), &reqDto)
+	resp, err := h.svc.AddImages(c.Request().Context(), &reqDto)
 	if err != nil {
 		if errors.Is(err, services.ErrForbidden) {
-			return r.JSONError(c, "failed to add images to listing", err, http.StatusForbidden)
+			return r.JSONError(c, "forbidden", err, http.StatusForbidden)
 		}
 
-		return r.JSONError(c, "failed to create listing", err, http.StatusInternalServerError)
+		if errors.Is(err, services.ErrTooManyImages) {
+			return r.JSONError(c, "listing has too many images", err)
+		}
+
+		return r.JSONError(
+			c,
+			"failed to add images to listing",
+			err,
+			http.StatusInternalServerError,
+		)
 	}
 
-	return r.JSONSuccess(c, "added images to listing", reqDto)
+	return r.JSONSuccess(c, "added images to listing", resp)
 }
 
 // HandleGetListings handles requests to get a list of listings.

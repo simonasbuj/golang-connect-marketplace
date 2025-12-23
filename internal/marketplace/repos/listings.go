@@ -21,6 +21,7 @@ type ListingsRepo interface {
 	CreateListing(ctx context.Context, req *dto.Listing) (*dto.Listing, error)
 	CheckIfUserOwnsListing(ctx context.Context, listingID, userID string) error
 	GetListingByID(ctx context.Context, listingID string) (*dto.Listing, error)
+	AddListingImage(ctx context.Context, listingID, path string) (*dto.ListingImage, error)
 }
 
 type listingsRepo struct {
@@ -160,4 +161,26 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 	}
 
 	return &listing, nil
+}
+
+func (r *listingsRepo) AddListingImage(
+	ctx context.Context,
+	listingID, path string,
+) (*dto.ListingImage, error) {
+	id := generate.ID("img")
+
+	query := `
+		INSERT INTO listings.listings_images (id, listing_id, path) 
+		VALUES ($1, $2, $3)
+		RETURNING id, listing_id, path
+	`
+
+	var img dto.ListingImage
+
+	err := r.db.GetContext(ctx, &img, query, id, listingID, path)
+	if err != nil {
+		return nil, fmt.Errorf("inserting listing image: %w", err)
+	}
+
+	return &img, nil
 }

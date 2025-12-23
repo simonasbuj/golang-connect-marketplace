@@ -3,9 +3,10 @@ package config
 
 // AppConfig defines environment-based configuration for the application.
 type AppConfig struct {
-	APIConfig  APIConfig
-	DBConfig   DBConfig
-	AuthConfig AuthConfig
+	APIConfig     APIConfig
+	DBConfig      DBConfig
+	AuthConfig    AuthConfig
+	StorageConfig StorageConfig
 }
 
 // DBConfig holds settings for database.
@@ -26,4 +27,10 @@ type AuthConfig struct {
 	TokenValidSeconds        int    `env:"MARKET_TOKEN_VALID_SECONDS"`
 	RefreshTokenValidSeconds int    `env:"MARKET_REFRESH_TOKEN_VALID_SECONDS"`
 	RefreshTokenLength       int    `env:"MARKET_REFRESH_TOKEN_LENGTH"`
+}
+
+// StorageConfig holds settings for storage.
+type StorageConfig struct {
+	UploadDir           string `env:"MARKET_IMAGE_UPLOAD_DIR"`
+	MaxImagesPerListing int    `env:"MARKET_MAX_IMAGES_PER_LISTING"`
 }

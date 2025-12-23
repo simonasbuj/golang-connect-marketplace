@@ -55,9 +55,9 @@ type AddImagesRequest struct {
 
 // ListingImage represents a single image belonging to a listing.
 type ListingImage struct {
-	ID        string `json:"id"`
-	ListingID string `json:"listing_id"`
-	Path      string `json:"path"`
+	ID        string `json:"id"         db:"id"`
+	ListingID string `json:"listing_id" db:"listing_id"`
+	Path      string `json:"path"       db:"path"`
 }
 
 // ListingImages represents a collection of listing images.

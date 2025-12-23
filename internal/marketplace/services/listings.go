@@ -5,23 +5,37 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang-connect-marketplace/config"
 	authDto "golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/marketplace/dto"
 	"golang-connect-marketplace/internal/marketplace/repos"
+	"golang-connect-marketplace/internal/marketplace/storage"
 )
 
-// ErrForbidden is returned when user is not allowed to do some actions.
-var ErrForbidden = errors.New("user is forbidden to do this action")
+var (
+	// ErrForbidden is returned when user is not allowed to do some actions.
+	ErrForbidden = errors.New("user is forbidden to do this action")
+	// ErrTooManyImages is returned when listing already has too many images.
+	ErrTooManyImages = errors.New("listing has too many images")
+)
 
 // ListingsService provides user and auth related operations.
 type ListingsService struct {
-	repo repos.ListingsRepo
+	repo    repos.ListingsRepo
+	storage storage.Storage
+	cfg     *config.StorageConfig
 }
 
 // NewListingsService creates a new Service instance.
-func NewListingsService(repo repos.ListingsRepo) *ListingsService {
+func NewListingsService(
+	repo repos.ListingsRepo,
+	storage storage.Storage,
+	cfg *config.StorageConfig,
+) *ListingsService {
 	return &ListingsService{
-		repo: repo,
+		repo:    repo,
+		storage: storage,
+		cfg:     cfg,
 	}
 }
 
@@ -65,13 +79,38 @@ func (s *ListingsService) CreateListing(
 }
 
 // AddImages handles logic for adding images to listing.
-func (s *ListingsService) AddImages(ctx context.Context, req *dto.AddImagesRequest) error {
-	err := s.repo.CheckIfUserOwnsListing(ctx, req.ListingID, req.UserID)
+func (s *ListingsService) AddImages(
+	ctx context.Context,
+	req *dto.AddImagesRequest,
+) (*dto.Listing, error) {
+	listing, err := s.repo.GetListingByID(ctx, req.ListingID)
 	if err != nil {
-		return fmt.Errorf("%w: %w", ErrForbidden, err)
+		return nil, fmt.Errorf("fetching listing: %w", err)
 	}
 
-	return nil
+	if listing.UserID != req.UserID {
+		return nil, ErrForbidden
+	}
+
+	if len(listing.Images)+len(req.FileHeaders) > s.cfg.MaxImagesPerListing {
+		return nil, ErrTooManyImages
+	}
+
+	for _, fh := range req.FileHeaders {
+		path, err := s.storage.StoreImage(ctx, &fh, req.ListingID)
+		if err != nil {
+			return nil, fmt.Errorf("storing image: %w", err)
+		}
+
+		listingImage, err := s.repo.AddListingImage(ctx, req.ListingID, path)
+		if err != nil {
+			return nil, fmt.Errorf("inserting image: %w", err)
+		}
+
+		listing.Images = append(listing.Images, *listingImage)
+	}
+
+	return listing, nil
 }
 
 // GetListingByID handles logic for fetching listing by id.
