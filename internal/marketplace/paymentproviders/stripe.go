@@ -33,9 +33,11 @@ func NewStripePaymentProvider(
 func (p *stripePaymentProvider) CreateAcountLinkingSession(
 	_ context.Context,
 	req *dto.SellerAcountLinkingSessionRequest,
+	user *dto.SellerAccount,
 ) (*dto.SellerAcountLinkingSessionResponse, error) {
 	params := &stripe.AccountParams{ //nolint:exhaustruct
-		Type: stripe.String(stripe.AccountTypeExpress),
+		Type:  stripe.String(stripe.AccountTypeExpress),
+		Email: stripe.String(user.Email),
 	}
 
 	acc, err := account.New(params)
@@ -57,6 +59,31 @@ func (p *stripePaymentProvider) CreateAcountLinkingSession(
 
 	resp := &dto.SellerAcountLinkingSessionResponse{
 		SellerID: acc.ID,
+		URL:      link.URL,
+	}
+
+	return resp, nil
+}
+
+func (p *stripePaymentProvider) CreateAccountUpdateSession(
+	_ context.Context,
+	req *dto.SellerAcountLinkingSessionRequest,
+	user *dto.SellerAccount,
+) (*dto.SellerAcountLinkingSessionResponse, error) {
+	linkParams := &stripe.AccountLinkParams{ //nolint:exhaustruct
+		Account:    stripe.String(*user.SellerID),
+		RefreshURL: &req.RefreshURL,
+		ReturnURL:  &req.ReturnURL,
+		Type:       stripe.String("account_onboarding"),
+	}
+
+	link, err := accountlink.New(linkParams)
+	if err != nil {
+		return nil, fmt.Errorf("creating stripe account update session url: %w", err)
+	}
+
+	resp := &dto.SellerAcountLinkingSessionResponse{
+		SellerID: *user.SellerID,
 		URL:      link.URL,
 	}
 

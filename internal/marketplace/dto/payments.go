@@ -17,11 +17,11 @@ type SellerAcountLinkingSessionResponse struct {
 
 // SellerAccount represents a seller account.
 type SellerAccount struct {
-	UserID    string
-	Email     string
-	Name      string
-	Lastname  string
-	Username  string
-	SellerID  string
-	CreatedAt time.Time
+	ID        string    `db:"id"`
+	Email     string    `db:"email"`
+	Name      string    `db:"name"`
+	Lastname  string    `db:"lastname"`
+	Username  string    `db:"username"`
+	SellerID  *string   `db:"seller_id"`
+	CreatedAt time.Time `db:"created_at"`
 }

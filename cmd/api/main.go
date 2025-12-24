@@ -85,12 +85,18 @@ func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service, cfg *con
 	marketRoutes.RegisterListingsRoutes(e, hndl, authSvc)
 }
 
-func setupPayments(e *echo.Echo, _ *sqlx.DB, authSvc *authSvc.Service, cfg *config.PaymentsConfig) {
+func setupPayments(
+	e *echo.Echo,
+	db *sqlx.DB,
+	authSvc *authSvc.Service,
+	cfg *config.PaymentsConfig,
+) {
+	repo := marketRepos.NewPaymentsRepo(db)
 	paymentProvider := paymentproviders.NewStripePaymentProvider(
 		cfg.StripeSecretKey,
 		cfg.StripeWebhookSecret,
 	)
-	svc := marketSvc.NewPaymentsService(paymentProvider)
+	svc := marketSvc.NewPaymentsService(paymentProvider, repo)
 	hndl := marketHndl.NewPaymentsHandler(svc)
 	marketRoutes.RegisterPaymentsRoutes(e, hndl, authSvc)
 }
