@@ -25,3 +25,16 @@ type SellerAccount struct {
 	SellerID  *string   `db:"seller_id"`
 	CreatedAt time.Time `db:"created_at"`
 }
+
+// CheckoutSessionRequest represents payload sent when creating checkout session.
+type CheckoutSessionRequest struct {
+	BuyerID    string `json:"-"           validate:"required"`
+	ListingID  string `json:"-"           validate:"required"`
+	SuccessURL string `json:"success_url" validate:"required"`
+	CancelURL  string `json:"cancel_url"  validate:"required"`
+}
+
+// CheckoutSessionResponse represents payload sent back when creating checkout session.
+type CheckoutSessionResponse struct {
+	URL string `json:"url"`
+}

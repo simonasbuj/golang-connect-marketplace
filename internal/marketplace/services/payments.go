@@ -56,3 +56,21 @@ func (s *PaymentsService) LinkSellerAccount(
 
 	return resp, nil
 }
+
+// CreateCheckoutSession handles bussines logic for creating checkout session for a listing.
+func (s *PaymentsService) CreateCheckoutSession(
+	ctx context.Context,
+	req *dto.CheckoutSessionRequest,
+) (*dto.CheckoutSessionResponse, error) {
+	seller, err := s.repo.GetSellerInfoByID(ctx, req.BuyerID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching seller info: %w", err)
+	}
+
+	resp, err := s.provider.CreateCheckoutSession(ctx, req, seller)
+	if err != nil {
+		return nil, fmt.Errorf("creating checkout session: %w", err)
+	}
+
+	return resp, nil
+}

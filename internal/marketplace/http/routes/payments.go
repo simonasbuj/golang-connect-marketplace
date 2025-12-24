@@ -13,4 +13,5 @@ func RegisterPaymentsRoutes(e *echo.Echo, h *handlers.PaymentsHandler, authSvc *
 	api := e.Group("api/v1/payments")
 
 	api.POST("/link-seller", h.HandleLinkSellerAccount, m.AuthenticateMiddleware(authSvc))
+	api.POST("/:listing_id", h.HandleCreateCheckoutSession, m.AuthenticateMiddleware(authSvc))
 }

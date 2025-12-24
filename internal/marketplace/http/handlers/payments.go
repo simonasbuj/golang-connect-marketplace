@@ -44,11 +44,43 @@ func (h *PaymentsHandler) HandleLinkSellerAccount(c echo.Context) error {
 	if err != nil {
 		return r.JSONError(
 			c,
-			"failed to create linking session",
+			"failed to create seller linking session",
 			err,
 			http.StatusInternalServerError,
 		)
 	}
 
-	return r.JSONSuccess(c, "created linking session", resp)
+	return r.JSONSuccess(c, "created seller linking session", resp)
+}
+
+// HandleCreateCheckoutSession handles creating new checkout session.
+func (h *PaymentsHandler) HandleCreateCheckoutSession(c echo.Context) error {
+	userClaims, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	listingID := c.Param(listingIDParamName)
+
+	var reqDto dto.CheckoutSessionRequest
+
+	reqDto.BuyerID = userClaims.ID
+	reqDto.ListingID = listingID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return r.JSONError(c, err.Error(), err)
+	}
+
+	resp, err := h.svc.CreateCheckoutSession(c.Request().Context(), &reqDto)
+	if err != nil {
+		return r.JSONError(
+			c,
+			"failed to create checkout session",
+			err,
+			http.StatusInternalServerError,
+		)
+	}
+
+	return r.JSONSuccess(c, "created checkout session", resp)
 }

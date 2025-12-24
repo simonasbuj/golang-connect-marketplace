@@ -17,4 +17,9 @@ type PaymentProvider interface {
 		req *dto.SellerAcountLinkingSessionRequest,
 		user *dto.SellerAccount,
 	) (*dto.SellerAcountLinkingSessionResponse, error)
+	CreateCheckoutSession(
+		ctx context.Context,
+		req *dto.CheckoutSessionRequest,
+		seller *dto.SellerAccount,
+	) (*dto.CheckoutSessionResponse, error)
 }

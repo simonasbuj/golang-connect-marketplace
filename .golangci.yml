@@ -31,6 +31,9 @@ linters:
     - path: pkg/responses
       linters:
         - wrapcheck
+    - path: internal/marketplace/paymentproviders/stripe
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:
