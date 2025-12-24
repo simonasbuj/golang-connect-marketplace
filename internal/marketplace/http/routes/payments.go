@@ -1,0 +1,17 @@
+// Package routes defines HTTP route registration for the application.
+package routes
+
+import (
+	m "golang-connect-marketplace/internal/auth/middleware"
+	"golang-connect-marketplace/internal/auth/service"
+	"golang-connect-marketplace/internal/marketplace/http/handlers"
+
+	"github.com/labstack/echo/v4"
+)
+
+// RegisterPaymentsRoutes registers marketplace-related HTTP routes.
+func RegisterPaymentsRoutes(e *echo.Echo, h *handlers.PaymentsHandler, authSvc *service.Service) {
+	api := e.Group("api/v1/payments")
+
+	api.POST("/link-seller", h.HandleLinkSellerAccount, m.AuthenticateMiddleware(authSvc))
+}

@@ -3,10 +3,11 @@ package config
 
 // AppConfig defines environment-based configuration for the application.
 type AppConfig struct {
-	APIConfig     APIConfig
-	DBConfig      DBConfig
-	AuthConfig    AuthConfig
-	StorageConfig StorageConfig
+	APIConfig      APIConfig
+	DBConfig       DBConfig
+	AuthConfig     AuthConfig
+	StorageConfig  StorageConfig
+	PaymentsConfig PaymentsConfig
 }
 
 // DBConfig holds settings for database.
@@ -33,4 +34,10 @@ type AuthConfig struct {
 type StorageConfig struct {
 	UploadDir           string `env:"MARKET_IMAGE_UPLOAD_DIR"`
 	MaxImagesPerListing int    `env:"MARKET_MAX_IMAGES_PER_LISTING"`
+}
+
+// PaymentsConfig holds settings for payments.
+type PaymentsConfig struct {
+	StripeSecretKey     string `env:"STRIPE_SECRET_KEY"`
+	StripeWebhookSecret string `env:"STRIPE_WEBHOOK_SECRET"`
 }

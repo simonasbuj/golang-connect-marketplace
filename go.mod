@@ -13,6 +13,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/matoous/go-nanoid/v2 v2.1.0
 	github.com/stretchr/testify v1.11.1
+	github.com/stripe/stripe-go/v84 v84.1.0
 	golang.org/x/crypto v0.46.0
 )
 

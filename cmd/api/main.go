@@ -9,6 +9,7 @@ import (
 	authSvc "golang-connect-marketplace/internal/auth/service"
 	marketHndl "golang-connect-marketplace/internal/marketplace/http/handlers"
 	marketRoutes "golang-connect-marketplace/internal/marketplace/http/routes"
+	"golang-connect-marketplace/internal/marketplace/paymentproviders"
 	marketRepos "golang-connect-marketplace/internal/marketplace/repos"
 	marketSvc "golang-connect-marketplace/internal/marketplace/services"
 	localStorage "golang-connect-marketplace/internal/marketplace/storage/local"
@@ -59,6 +60,7 @@ func main() {
 
 	authSvc := setupAuth(e, db, &cfg.AuthConfig)
 	setupListings(e, db, authSvc, &cfg.StorageConfig)
+	setupPayments(e, db, authSvc, &cfg.PaymentsConfig)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -80,5 +82,15 @@ func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service, cfg *con
 	storage := localStorage.NewLocalStorage(cfg.UploadDir)
 	svc := marketSvc.NewListingsService(repo, storage, cfg)
 	hndl := marketHndl.NewListingsHandler(svc)
-	marketRoutes.RegisterRoutes(e, hndl, authSvc)
+	marketRoutes.RegisterListingsRoutes(e, hndl, authSvc)
+}
+
+func setupPayments(e *echo.Echo, _ *sqlx.DB, authSvc *authSvc.Service, cfg *config.PaymentsConfig) {
+	paymentProvider := paymentproviders.NewStripePaymentProvider(
+		cfg.StripeSecretKey,
+		cfg.StripeWebhookSecret,
+	)
+	svc := marketSvc.NewPaymentsService(paymentProvider)
+	hndl := marketHndl.NewPaymentsHandler(svc)
+	marketRoutes.RegisterPaymentsRoutes(e, hndl, authSvc)
 }
