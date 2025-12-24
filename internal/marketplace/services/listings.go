@@ -21,7 +21,7 @@ var (
 	ErrImageDoesntExist = errors.New("provided image doesn't exist in this listing")
 )
 
-// ListingsService provides user and auth related operations.
+// ListingsService provides listing related operations bussines logic.
 type ListingsService struct {
 	repo    repos.ListingsRepo
 	storage storage.Storage
