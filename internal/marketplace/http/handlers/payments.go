@@ -24,6 +24,7 @@ func NewPaymentsHandler(svc *services.PaymentsService) *PaymentsHandler {
 	}
 }
 
+// HandleLinkSellerAccount handles linking user to seller account.
 func (h *PaymentsHandler) HandleLinkSellerAccount(c echo.Context) error {
 	userClaims, err := middleware.GetUserFromContext(c)
 	if err != nil {

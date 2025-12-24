@@ -1,4 +1,4 @@
-// package paymentproviders
+// Package paymentproviders provides implementations of the PaymentProvider
 package paymentproviders
 
 import (
@@ -15,7 +15,10 @@ type stripePaymentProvider struct {
 	webhookSecret string
 }
 
-func NewStripePaymentProvider(secretKey, webhookSecret string) *stripePaymentProvider {
+// NewStripePaymentProvider returns stripePaymentProvider which implements the PaymentProvider interface using stripe.
+func NewStripePaymentProvider(
+	secretKey, webhookSecret string,
+) *stripePaymentProvider { //nolint:revive
 	if secretKey == "" || webhookSecret == "" {
 		panic("secretKey and webhookSecret are required for stripePaymentProvider")
 	}
@@ -28,10 +31,10 @@ func NewStripePaymentProvider(secretKey, webhookSecret string) *stripePaymentPro
 }
 
 func (p *stripePaymentProvider) CreateAcountLinkingSession(
-	ctx context.Context,
+	_ context.Context,
 	req *dto.SellerAcountLinkingSessionRequest,
 ) (*dto.SellerAcountLinkingSessionResponse, error) {
-	params := &stripe.AccountParams{
+	params := &stripe.AccountParams{ //nolint:exhaustruct
 		Type: stripe.String(stripe.AccountTypeExpress),
 	}
 
@@ -40,7 +43,7 @@ func (p *stripePaymentProvider) CreateAcountLinkingSession(
 		return nil, fmt.Errorf("creating new stripe seller account id: %w", err)
 	}
 
-	linkParams := &stripe.AccountLinkParams{
+	linkParams := &stripe.AccountLinkParams{ //nolint:exhaustruct
 		Account:    stripe.String(acc.ID),
 		RefreshURL: &req.RefreshURL,
 		ReturnURL:  &req.ReturnURL,

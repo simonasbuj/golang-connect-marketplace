@@ -12,7 +12,7 @@ type PaymentsService struct {
 	provider paymentproviders.PaymentProvider
 }
 
-// NewPaymentsService returns an instance of PaymentsService
+// NewPaymentsService returns an instance of PaymentsService.
 func NewPaymentsService(provider paymentproviders.PaymentProvider) *PaymentsService {
 	return &PaymentsService{
 		provider: provider,
