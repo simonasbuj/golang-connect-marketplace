@@ -138,6 +138,10 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 	query := `
 		SELECT
 			l.*,
+			a.id as "seller.id",
+			a.username as "seller.username",
+			a.created_at as "seller.created_at",
+			sa.id as "seller.seller_id",
 			COALESCE(
 				json_agg(
 					json_build_object(
@@ -149,9 +153,11 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 				'[]'
 			) AS images
 		FROM listings.listings l
-		LEFT JOIN listings.listings_images i ON i.listing_id = l.id
+			LEFT JOIN listings.listings_images i ON i.listing_id = l.id
+			LEFT JOIN auth.users a on a.id = l.user_id
+			LEFT JOIN payments.seller_accounts sa on sa.user_id = a.id
 		WHERE l.id = $1
-		GROUP BY l.id
+		GROUP BY l.id, a.id, sa.id
 	`
 
 	var listing dto.Listing

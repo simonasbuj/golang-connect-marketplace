@@ -32,13 +32,13 @@ type SellerAcountLinkingSessionResponse struct {
 
 // SellerAccount represents a seller account.
 type SellerAccount struct {
-	ID        string    `db:"id"`
-	Email     string    `db:"email"`
-	Name      string    `db:"name"`
-	Lastname  string    `db:"lastname"`
-	Username  string    `db:"username"`
-	SellerID  *string   `db:"seller_id"`
-	CreatedAt time.Time `db:"created_at"`
+	ID        string    `json:"id,omitempty"         db:"id"`
+	Email     string    `json:"email,omitempty"      db:"email"`
+	Name      string    `json:"name,omitempty"       db:"name"`
+	Lastname  string    `json:"lastname,omitempty"   db:"lastname"`
+	Username  string    `json:"username,omitempty"   db:"username"`
+	SellerID  *string   `json:"seller_id,omitempty"  db:"seller_id"`
+	CreatedAt time.Time `json:"created_at,omitempty" db:"created_at"`
 }
 
 // CheckoutSessionRequest represents payload sent when creating checkout session.

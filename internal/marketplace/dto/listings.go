@@ -39,6 +39,7 @@ type Listing struct {
 	Description  string        `json:"description"    db:"description"    validate:"required"`
 	PriceInCents int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1000"`
 	Currency     string        `json:"currency"       db:"currency"       validate:"required,len=3"`
+	Seller       SellerAccount `json:"seller"         db:"seller"`
 	Status       ListingStatus `json:"status"         db:"status"`
 	Images       ListingImages `json:"images"         db:"images"`
 	CreatedAt    time.Time     `json:"created_at"     db:"created_at"`
