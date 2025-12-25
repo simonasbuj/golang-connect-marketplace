@@ -20,6 +20,7 @@ type PaymentProvider interface {
 	CreateCheckoutSession(
 		ctx context.Context,
 		req *dto.CheckoutSessionRequest,
-		seller *dto.SellerAccount,
+		listing *dto.Listing,
+		feeAmount int64,
 	) (*dto.CheckoutSessionResponse, error)
 }

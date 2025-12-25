@@ -59,8 +59,8 @@ func main() {
 	e.Use(echoMiddleware.BodyLimit(cfg.APIConfig.MaxPayloadSize))
 
 	authSvc := setupAuth(e, db, &cfg.AuthConfig)
-	setupListings(e, db, authSvc, &cfg.StorageConfig)
-	setupPayments(e, db, authSvc, &cfg.PaymentsConfig)
+	listingsRepo := setupListings(e, db, authSvc, &cfg.StorageConfig)
+	setupPayments(e, db, authSvc, listingsRepo, &cfg.PaymentsConfig)
 
 	err = e.Start(cfg.APIConfig.HTTPAddress)
 	if err != nil {
@@ -77,18 +77,26 @@ func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) *authSvc.Servi
 	return svc
 }
 
-func setupListings(e *echo.Echo, db *sqlx.DB, authSvc *authSvc.Service, cfg *config.StorageConfig) {
+func setupListings( //nolint:ireturn
+	e *echo.Echo,
+	db *sqlx.DB,
+	authSvc *authSvc.Service,
+	cfg *config.StorageConfig,
+) marketRepos.ListingsRepo {
 	repo := marketRepos.NewListingsRepo(db)
 	storage := localStorage.NewLocalStorage(cfg.UploadDir)
 	svc := marketSvc.NewListingsService(repo, storage, cfg)
 	hndl := marketHndl.NewListingsHandler(svc)
 	marketRoutes.RegisterListingsRoutes(e, hndl, authSvc)
+
+	return repo
 }
 
 func setupPayments(
 	e *echo.Echo,
 	db *sqlx.DB,
 	authSvc *authSvc.Service,
+	listingsRepo marketRepos.ListingsRepo,
 	cfg *config.PaymentsConfig,
 ) {
 	repo := marketRepos.NewPaymentsRepo(db)
@@ -96,7 +104,7 @@ func setupPayments(
 		cfg.StripeSecretKey,
 		cfg.StripeWebhookSecret,
 	)
-	svc := marketSvc.NewPaymentsService(paymentProvider, repo)
+	svc := marketSvc.NewPaymentsService(paymentProvider, repo, listingsRepo)
 	hndl := marketHndl.NewPaymentsHandler(svc)
 	marketRoutes.RegisterPaymentsRoutes(e, hndl, authSvc)
 }

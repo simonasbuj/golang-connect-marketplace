@@ -8,20 +8,29 @@ import (
 	"golang-connect-marketplace/internal/marketplace/repos"
 )
 
+const (
+	minimumFee     = 100
+	feePercent     = 4
+	percentDivisor = 100
+)
+
 // PaymentsService provides payments related operations bussines logic.
 type PaymentsService struct {
-	provider paymentproviders.PaymentProvider
-	repo     repos.PaymentsRepo
+	provider     paymentproviders.PaymentProvider
+	paymentsRepo repos.PaymentsRepo
+	listingsRepo repos.ListingsRepo
 }
 
 // NewPaymentsService returns an instance of PaymentsService.
 func NewPaymentsService(
 	provider paymentproviders.PaymentProvider,
-	repo repos.PaymentsRepo,
+	paymentsRepo repos.PaymentsRepo,
+	listingsRepo repos.ListingsRepo,
 ) *PaymentsService {
 	return &PaymentsService{
-		provider: provider,
-		repo:     repo,
+		provider:     provider,
+		paymentsRepo: paymentsRepo,
+		listingsRepo: listingsRepo,
 	}
 }
 
@@ -30,7 +39,7 @@ func (s *PaymentsService) LinkSellerAccount(
 	ctx context.Context,
 	req *dto.SellerAcountLinkingSessionRequest,
 ) (*dto.SellerAcountLinkingSessionResponse, error) {
-	user, err := s.repo.GetSellerInfoByID(ctx, req.UserID)
+	user, err := s.paymentsRepo.GetSellerInfoByID(ctx, req.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching seller info: %w", err)
 	}
@@ -49,7 +58,7 @@ func (s *PaymentsService) LinkSellerAccount(
 		return nil, fmt.Errorf("creating seller account linking session: %w", err)
 	}
 
-	_, err = s.repo.UpdateSellerID(ctx, req.UserID, resp.SellerID, resp.Provider)
+	_, err = s.paymentsRepo.UpdateSellerID(ctx, req.UserID, resp.SellerID, resp.Provider)
 	if err != nil {
 		return nil, fmt.Errorf("updating seller id: %w", err)
 	}
@@ -62,15 +71,31 @@ func (s *PaymentsService) CreateCheckoutSession(
 	ctx context.Context,
 	req *dto.CheckoutSessionRequest,
 ) (*dto.CheckoutSessionResponse, error) {
-	seller, err := s.repo.GetSellerInfoByID(ctx, req.BuyerID)
+	listing, err := s.listingsRepo.GetListingByID(ctx, req.ListingID)
 	if err != nil {
-		return nil, fmt.Errorf("fetching seller info: %w", err)
+		return nil, fmt.Errorf("fetching listing while creating checkout session: %w", err)
 	}
 
-	resp, err := s.provider.CreateCheckoutSession(ctx, req, seller)
+	if listing.Status != dto.ListingStatusOpen {
+		return nil, ErrListingIsNotOpen
+	}
+
+	if listing.Seller.SellerID == nil {
+		return nil, ErrUserIsNotSeller
+	}
+
+	fee := s.calculateFee(listing)
+
+	resp, err := s.provider.CreateCheckoutSession(ctx, req, listing, fee)
 	if err != nil {
 		return nil, fmt.Errorf("creating checkout session: %w", err)
 	}
 
 	return resp, nil
+}
+
+func (s *PaymentsService) calculateFee(listing *dto.Listing) int64 {
+	fee := listing.PriceInCents*feePercent/percentDivisor + minimumFee
+
+	return int64(fee)
 }

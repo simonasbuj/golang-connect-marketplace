@@ -19,6 +19,10 @@ var (
 	ErrTooManyImages = errors.New("listing has too many images")
 	// ErrImageDoesntExist is returned when provided image id doesnt exist in listing.
 	ErrImageDoesntExist = errors.New("provided image doesn't exist in this listing")
+	// ErrListingIsNotOpen is returned when trying to update or pay for a listing that is not open anymore.
+	ErrListingIsNotOpen = errors.New("listing is not open")
+	// ErrUserIsNotSeller is returned user doesn't have seller account linked.
+	ErrUserIsNotSeller = errors.New("user doesn't have seller account linked")
 )
 
 // ListingsService provides listing related operations bussines logic.

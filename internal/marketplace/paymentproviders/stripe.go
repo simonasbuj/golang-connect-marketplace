@@ -17,10 +17,8 @@ type stripePaymentProvider struct {
 }
 
 const (
-	metadataKeyListingID   = "listing_id"
-	metadataKeyBuyerID     = "buyer_id"
-	placeholderFeeAmount   = 100
-	placeholderPriceAmount = 999
+	metadataKeyListingID = "listing_id"
+	metadataKeyBuyerID   = "buyer_id"
 )
 
 // NewStripePaymentProvider returns stripePaymentProvider which implements the PaymentProvider interface using stripe.
@@ -103,20 +101,23 @@ func (p *stripePaymentProvider) CreateAccountUpdateSession(
 func (p *stripePaymentProvider) CreateCheckoutSession(
 	_ context.Context,
 	req *dto.CheckoutSessionRequest,
-	seller *dto.SellerAccount,
+	listing *dto.Listing,
+	feeAmount int64,
 ) (*dto.CheckoutSessionResponse, error) {
+	checkoutItemName := fmt.Sprintf("Buying %s from @%s", listing.Title, listing.Seller.Username)
+
 	params := &stripe.CheckoutSessionParams{
 		Mode:       stripe.String(stripe.CheckoutSessionModePayment),
 		SuccessURL: stripe.String(req.SuccessURL),
 		CancelURL:  stripe.String(req.CancelURL),
 
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
-			ApplicationFeeAmount: stripe.Int64(placeholderFeeAmount),
+			ApplicationFeeAmount: stripe.Int64(feeAmount),
 			TransferData: &stripe.CheckoutSessionPaymentIntentDataTransferDataParams{
-				Destination: stripe.String(*seller.SellerID),
+				Destination: stripe.String(*listing.Seller.SellerID),
 			},
 			Metadata: map[string]string{
-				metadataKeyListingID: req.ListingID,
+				metadataKeyListingID: listing.ID,
 				metadataKeyBuyerID:   req.BuyerID,
 			},
 		},
@@ -124,21 +125,21 @@ func (p *stripePaymentProvider) CreateCheckoutSession(
 		LineItems: []*stripe.CheckoutSessionLineItemParams{
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-					Currency: stripe.String("eur"),
+					Currency: stripe.String(listing.Currency),
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
-						Name: stripe.String("buying item from " + *seller.SellerID),
+						Name: stripe.String(checkoutItemName),
 					},
-					UnitAmount: stripe.Int64(placeholderPriceAmount),
+					UnitAmount: stripe.Int64(int64(listing.PriceInCents)),
 				},
 				Quantity: stripe.Int64(1),
 			},
 			{
 				PriceData: &stripe.CheckoutSessionLineItemPriceDataParams{
-					Currency: stripe.String("eur"),
+					Currency: stripe.String(listing.Currency),
 					ProductData: &stripe.CheckoutSessionLineItemPriceDataProductDataParams{
 						Name: stripe.String("marketplace fee"),
 					},
-					UnitAmount: stripe.Int64(placeholderFeeAmount),
+					UnitAmount: stripe.Int64(feeAmount),
 				},
 				Quantity: stripe.Int64(1),
 			},
