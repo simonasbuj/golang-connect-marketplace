@@ -37,7 +37,7 @@ type Listing struct {
 	CategoryID   string        `json:"category_id"    db:"category_id"    validate:"required"`
 	Title        string        `json:"title"          db:"title"          validate:"required,min=8,max=100"`
 	Description  string        `json:"description"    db:"description"    validate:"required"`
-	PriceInCents int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1"`
+	PriceInCents int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1000"`
 	Currency     string        `json:"currency"       db:"currency"       validate:"required,len=3"`
 	Status       ListingStatus `json:"status"         db:"status"`
 	Images       ListingImages `json:"images"         db:"images"`

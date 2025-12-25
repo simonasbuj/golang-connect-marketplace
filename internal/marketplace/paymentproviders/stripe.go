@@ -68,6 +68,7 @@ func (p *stripePaymentProvider) CreateAcountLinkingSession(
 	resp := &dto.SellerAcountLinkingSessionResponse{
 		SellerID: acc.ID,
 		URL:      link.URL,
+		Provider: dto.ProviderStripe,
 	}
 
 	return resp, nil
@@ -93,6 +94,7 @@ func (p *stripePaymentProvider) CreateAccountUpdateSession(
 	resp := &dto.SellerAcountLinkingSessionResponse{
 		SellerID: *user.SellerID,
 		URL:      link.URL,
+		Provider: dto.ProviderStripe,
 	}
 
 	return resp, nil

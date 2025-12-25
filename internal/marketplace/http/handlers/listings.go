@@ -132,6 +132,10 @@ func (h *ListingsHandler) HandleDeleteImages(c echo.Context) error {
 
 	resp, err := h.svc.DeleteImage(c.Request().Context(), &reqDto)
 	if err != nil {
+		if errors.Is(err, services.ErrForbidden) {
+			return r.JSONError(c, "forbidden", err, http.StatusForbidden)
+		}
+
 		return r.JSONError(c, "failed to delete image", err)
 	}
 

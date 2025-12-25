@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS auth.users (
     lastname VARCHAR(100) NOT NULL,
     username VARCHAR(40) NOT NULL,
     role auth.user_role DEFAULT 'customer' NOT NULL,
-    seller_id TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
