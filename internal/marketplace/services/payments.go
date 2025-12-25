@@ -49,7 +49,7 @@ func (s *PaymentsService) LinkSellerAccount(
 		return nil, fmt.Errorf("creating seller account linking session: %w", err)
 	}
 
-	_, err = s.repo.UpdateSellerID(ctx, req.UserID, resp.SellerID)
+	_, err = s.repo.UpdateSellerID(ctx, req.UserID, resp.SellerID, resp.Provider)
 	if err != nil {
 		return nil, fmt.Errorf("updating seller id: %w", err)
 	}

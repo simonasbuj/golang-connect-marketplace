@@ -1,6 +1,20 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
+
+// Provider represents a payment provider enum.
+type Provider string
+
+const (
+	// ProviderStripe represents the Stripe payment provider.
+	ProviderStripe Provider = "stripe"
+	// ProviderKlix represents the klix payment provider.
+	ProviderKlix Provider = "klix"
+	// ProviderPolar represents the polar.sh payment provider.
+	ProviderPolar Provider = "polar.sh"
+)
 
 // SellerAcountLinkingSessionRequest represents payload sent when linking seller account.
 type SellerAcountLinkingSessionRequest struct {
@@ -11,8 +25,9 @@ type SellerAcountLinkingSessionRequest struct {
 
 // SellerAcountLinkingSessionResponse represents payload sent back when linking seller account.
 type SellerAcountLinkingSessionResponse struct {
-	SellerID string `json:"seller_id"`
-	URL      string `json:"url"`
+	SellerID string   `json:"seller_id"`
+	URL      string   `json:"url"`
+	Provider Provider `json:"provider"`
 }
 
 // SellerAccount represents a seller account.

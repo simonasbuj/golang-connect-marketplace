@@ -11,7 +11,11 @@ import (
 // PaymentsRepo defines methods for accessing and managing payments data.
 type PaymentsRepo interface {
 	GetSellerInfoByID(ctx context.Context, userID string) (*dto.SellerAccount, error)
-	UpdateSellerID(ctx context.Context, userID, sellerID string) (*dto.SellerAccount, error)
+	UpdateSellerID(
+		ctx context.Context,
+		userID, sellerID string,
+		provider dto.Provider,
+	) (*dto.SellerAccount, error)
 }
 
 type paymentsRepo struct {
@@ -28,9 +32,10 @@ func (r *paymentsRepo) GetSellerInfoByID(
 	userID string,
 ) (*dto.SellerAccount, error) {
 	query := `
-		SELECT id, email, name, lastname, username, seller_id, created_at
-		FROM auth.users
-		WHERE id = $1
+		SELECT a.id, a.email, a.name, a.lastname, a.username, s.id as seller_id, a.created_at
+		FROM auth.users a
+			LEFT JOIN payments.seller_accounts s ON a.id = s.user_id
+		WHERE a.id = $1
 	`
 
 	var resp dto.SellerAccount
@@ -46,17 +51,22 @@ func (r *paymentsRepo) GetSellerInfoByID(
 func (r *paymentsRepo) UpdateSellerID(
 	ctx context.Context,
 	userID, sellerID string,
+	provider dto.Provider,
 ) (*dto.SellerAccount, error) {
 	query := `
-		UPDATE auth.users
-		SET seller_id = $2
-		WHERE id = $1
-		RETURNING id, email, name, lastname, username, seller_id, created_at
+		WITH insert_stmt as (
+			INSERT INTO payments.seller_accounts (id, user_id, provider)
+			VALUES($2, $1, $3)
+		)
+		SELECT a.id, a.email, a.name, a.lastname, a.username, s.id as seller_id, a.created_at
+		FROM auth.users a
+			LEFT JOIN payments.seller_accounts s ON a.id = s.user_id
+		WHERE a.id = $1
 	`
 
 	var resp dto.SellerAccount
 
-	err := r.db.GetContext(ctx, &resp, query, userID, sellerID)
+	err := r.db.GetContext(ctx, &resp, query, userID, sellerID, provider)
 	if err != nil {
 		return nil, fmt.Errorf("updating seller_id for user in database: %w", err)
 	}
