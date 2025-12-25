@@ -129,24 +129,26 @@ func (s *ListingsService) DeleteImage(
 		return nil, fmt.Errorf("fetching listing: %w", err)
 	}
 
+	if listing.Status != dto.ListingStatusOpen {
+		return nil, ErrListingIsNotOpen
+	}
+
 	if listing.UserID != req.UserID {
 		return nil, ErrForbidden
 	}
 
-	doesImageExist := false
 	path := ""
 
 	for i, img := range listing.Images {
 		if img.ID == req.ImageID {
 			listing.Images = append(listing.Images[:i], listing.Images[i+1:]...)
-			doesImageExist = true
 			path = img.Path
 
 			break
 		}
 	}
 
-	if !doesImageExist {
+	if path == "" {
 		return nil, ErrImageDoesntExist
 	}
 
