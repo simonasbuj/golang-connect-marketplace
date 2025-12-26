@@ -53,3 +53,18 @@ type CheckoutSessionRequest struct {
 type CheckoutSessionResponse struct {
 	URL string `json:"url"`
 }
+
+// Payment represents payment.
+type Payment struct {
+	ID                string     `json:"id"                  db:"id"`
+	ListingID         string     `json:"listing_id"          db:"listing_id"`
+	BuyerID           string     `json:"buyer_id"            db:"buyer_id"`
+	ProviderPaymentID string     `json:"provider_payment_id" db:"provider_payment_id"`
+	Provider          Provider   `json:"provider"            db:"provider"`
+	AmountInCents     int        `json:"amount_in_cents"     db:"amount_in_cents"`
+	FeeAmountInCents  int        `json:"fee_amount_in_cents" db:"fee_amount_in_cents"`
+	Currency          string     `json:"currency"            db:"currency"`
+	CreatedAt         time.Time  `json:"created_at"          db:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"          db:"updated_at"`
+	RefundedAt        *time.Time `json:"refunded_at"         db:"refunded_at"`
+}

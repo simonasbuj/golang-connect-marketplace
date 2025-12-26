@@ -16,6 +16,7 @@ type PaymentsRepo interface {
 		userID, sellerID string,
 		provider dto.Provider,
 	) (*dto.SellerAccount, error)
+	SavePayment(ctx context.Context, payment *dto.Payment) (*dto.Payment, error)
 }
 
 type paymentsRepo struct {
@@ -72,4 +73,24 @@ func (r *paymentsRepo) UpdateSellerID(
 	}
 
 	return &resp, nil
+}
+
+func (r *paymentsRepo) SavePayment(
+	ctx context.Context,
+	payment *dto.Payment,
+) (*dto.Payment, error) {
+	query := `
+		INSERT INTO payments.payments 
+			(id, listing_id, buyer_id, provider_payment_id, provider, amount_in_cents, fee_amount_in_cents, currency) 
+		VALUES 
+			(:id, :listing_id, :buyer_id, :provider_payment_id, :provider, :amount_in_cents, :fee_amount_in_cents, :currency) 
+		RETURNING *
+	`
+
+	_, err := r.db.NamedExecContext(ctx, query, payment)
+	if err != nil {
+		return nil, fmt.Errorf("inserting payment into database: %w", err)
+	}
+
+	return payment, nil
 }

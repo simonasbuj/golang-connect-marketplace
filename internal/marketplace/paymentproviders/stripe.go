@@ -3,13 +3,25 @@ package paymentproviders
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"golang-connect-marketplace/internal/marketplace/dto"
+	"golang-connect-marketplace/pkg/generate"
+	"net/http"
 
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/account"
 	"github.com/stripe/stripe-go/v84/accountlink"
 	"github.com/stripe/stripe-go/v84/checkout/session"
+	"github.com/stripe/stripe-go/v84/webhook"
+)
+
+var (
+	// ErrUnknownWebhookEventType is returned when unknown Stripe webhook event is received.
+	ErrUnknownWebhookEventType = errors.New("unhandled event type")
+	// ErrWebhookMetadataHasMissingFields is returned when webhook is missing expected metadata fields.
+	ErrWebhookMetadataHasMissingFields = errors.New("order_id missing from payment metadata")
 )
 
 type stripePaymentProvider struct {
@@ -156,4 +168,51 @@ func (p *stripePaymentProvider) CreateCheckoutSession(
 	}
 
 	return resp, nil
+}
+
+func (p *stripePaymentProvider) VerifySuccessWebhook(
+	_ context.Context,
+	payload []byte,
+	header http.Header,
+) (*dto.Payment, error) {
+	sigHeader := header.Get("Stripe-Signature")
+
+	event, err := webhook.ConstructEvent(payload, sigHeader, p.webhookSecret)
+	if err != nil {
+		return nil, fmt.Errorf("veryfing stripe webhook signature: %w", err)
+	}
+
+	if event.Type != "payment_intent.succeeded" {
+		return nil, fmt.Errorf("%w: %s", ErrUnknownWebhookEventType, event.Type)
+	}
+
+	var pi stripe.PaymentIntent
+
+	err = json.Unmarshal(event.Data.Raw, &pi)
+	if err != nil {
+		return nil, fmt.Errorf("unmarhsaling payment intent: %w", err)
+	}
+
+	listingID, ok := pi.Metadata[metadataKeyListingID]
+	if !ok || listingID == "" {
+		return nil, fmt.Errorf("%w: %s", ErrWebhookMetadataHasMissingFields, metadataKeyListingID)
+	}
+
+	buyerID, ok := pi.Metadata[metadataKeyBuyerID]
+	if !ok || buyerID == "" {
+		return nil, fmt.Errorf("%w: %s", ErrWebhookMetadataHasMissingFields, metadataKeyBuyerID)
+	}
+
+	respDto := &dto.Payment{
+		ID:                generate.ID("pmnt"),
+		ListingID:         listingID,
+		BuyerID:           buyerID,
+		Provider:          dto.ProviderStripe,
+		ProviderPaymentID: pi.ID,
+		AmountInCents:     int(pi.Amount) - int(pi.ApplicationFeeAmount),
+		FeeAmountInCents:  int(pi.ApplicationFeeAmount),
+		Currency:          string(pi.Currency),
+	}
+
+	return respDto, nil
 }

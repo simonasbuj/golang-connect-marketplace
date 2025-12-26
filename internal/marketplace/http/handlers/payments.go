@@ -5,6 +5,7 @@ import (
 	"golang-connect-marketplace/internal/marketplace/dto"
 	"golang-connect-marketplace/internal/marketplace/services"
 	"golang-connect-marketplace/pkg/validation"
+	"io"
 	"net/http"
 
 	r "golang-connect-marketplace/pkg/responses"
@@ -83,4 +84,21 @@ func (h *PaymentsHandler) HandleCreateCheckoutSession(c echo.Context) error {
 	}
 
 	return r.JSONSuccess(c, "created checkout session", resp)
+}
+
+// HandlePaymentWebhookSuccess handles payment success webhook events.
+func (h *PaymentsHandler) HandlePaymentWebhookSuccess(c echo.Context) error {
+	payload, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return r.JSONError(c, "failed to read request payload", err)
+	}
+
+	header := c.Request().Header
+
+	resp, err := h.svc.HandleSuccessWebhook(c.Request().Context(), payload, header)
+	if err != nil {
+		return r.JSONError(c, "failed to verify payment", err)
+	}
+
+	return r.JSONSuccess(c, "payment success webhook handled", resp)
 }
