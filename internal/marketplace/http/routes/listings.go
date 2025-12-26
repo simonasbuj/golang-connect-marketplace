@@ -18,6 +18,7 @@ func RegisterListingsRoutes(e *echo.Echo, lh *handlers.ListingsHandler, authSvc 
 	listings.GET("", lh.HandleGetListings)
 	listings.POST("", lh.HandleCreateListing, m.AuthenticateMiddleware(authSvc))
 	listings.GET("/:listing_id", lh.HandleGetListing)
+	listings.PATCH("/:listing_id", lh.HandleUpdateListing, m.AuthenticateMiddleware(authSvc))
 	listings.POST("/:listing_id/images", lh.HandleAddImages, m.AuthenticateMiddleware(authSvc))
 	listings.DELETE("/:listing_id/images", lh.HandleDeleteImages, m.AuthenticateMiddleware(authSvc))
 
