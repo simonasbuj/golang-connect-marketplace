@@ -102,3 +102,20 @@ func (h *PaymentsHandler) HandlePaymentWebhookSuccess(c echo.Context) error {
 
 	return r.JSONSuccess(c, "payment success webhook handled", resp)
 }
+
+// HandlePaymentWebhookRefund handles payment refund webhook events.
+func (h *PaymentsHandler) HandlePaymentWebhookRefund(c echo.Context) error {
+	payload, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return r.JSONError(c, "failed to read request payload", err)
+	}
+
+	header := c.Request().Header
+
+	resp, err := h.svc.HandleRefundWebhook(c.Request().Context(), payload, header)
+	if err != nil {
+		return r.JSONError(c, "failed to verify refund", err)
+	}
+
+	return r.JSONSuccess(c, "payment refund webhook handled", resp)
+}

@@ -16,4 +16,5 @@ func RegisterPaymentsRoutes(e *echo.Echo, h *handlers.PaymentsHandler, authSvc *
 	api.POST("/:listing_id", h.HandleCreateCheckoutSession, m.AuthenticateMiddleware(authSvc))
 
 	api.POST("/webhook/success", h.HandlePaymentWebhookSuccess)
+	api.POST("/webhook/refund", h.HandlePaymentWebhookRefund)
 }

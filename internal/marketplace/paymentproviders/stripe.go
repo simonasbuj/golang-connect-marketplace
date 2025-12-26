@@ -14,6 +14,7 @@ import (
 	"github.com/stripe/stripe-go/v84/account"
 	"github.com/stripe/stripe-go/v84/accountlink"
 	"github.com/stripe/stripe-go/v84/checkout/session"
+	"github.com/stripe/stripe-go/v84/paymentintent"
 	"github.com/stripe/stripe-go/v84/webhook"
 )
 
@@ -203,7 +204,7 @@ func (p *stripePaymentProvider) VerifySuccessWebhook(
 		return nil, fmt.Errorf("%w: %s", ErrWebhookMetadataHasMissingFields, metadataKeyBuyerID)
 	}
 
-	respDto := &dto.Payment{
+	payment := &dto.Payment{
 		ID:                generate.ID("pmnt"),
 		ListingID:         listingID,
 		BuyerID:           buyerID,
@@ -214,5 +215,59 @@ func (p *stripePaymentProvider) VerifySuccessWebhook(
 		Currency:          string(pi.Currency),
 	}
 
-	return respDto, nil
+	return payment, nil
+}
+
+func (p *stripePaymentProvider) VerifyRefundWebhook(
+	_ context.Context,
+	payload []byte,
+	header http.Header,
+) (*dto.Payment, error) {
+	sigHeader := header.Get("Stripe-Signature")
+
+	event, err := webhook.ConstructEvent(payload, sigHeader, p.webhookSecret)
+	if err != nil {
+		return nil, fmt.Errorf("verifying stripe webhook signature: %w", err)
+	}
+
+	if event.Type != "charge.refunded" {
+		return nil, fmt.Errorf("%w: %s", ErrUnknownWebhookEventType, event.Type)
+	}
+
+	var ch stripe.Charge
+
+	err = json.Unmarshal(event.Data.Raw, &ch)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling charge: %w", err)
+	}
+
+	paymentIntentID := ch.PaymentIntent.ID
+
+	pi, err := paymentintent.Get(paymentIntentID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("fetching payment intent from stripe api: %w", err)
+	}
+
+	listingID, ok := pi.Metadata[metadataKeyListingID]
+	if !ok || listingID == "" {
+		return nil, fmt.Errorf("%w: %s", ErrWebhookMetadataHasMissingFields, metadataKeyListingID)
+	}
+
+	buyerID, ok := pi.Metadata[metadataKeyBuyerID]
+	if !ok || buyerID == "" {
+		return nil, fmt.Errorf("%w: %s", ErrWebhookMetadataHasMissingFields, metadataKeyBuyerID)
+	}
+
+	payment := &dto.Payment{
+		ID:                "",
+		ListingID:         listingID,
+		BuyerID:           buyerID,
+		Provider:          dto.ProviderStripe,
+		ProviderPaymentID: pi.ID,
+		AmountInCents:     int(pi.Amount) - int(pi.ApplicationFeeAmount),
+		FeeAmountInCents:  int(pi.ApplicationFeeAmount),
+		Currency:          string(pi.Currency),
+	}
+
+	return payment, nil
 }

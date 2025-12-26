@@ -29,4 +29,9 @@ type PaymentProvider interface {
 		payload []byte,
 		header http.Header,
 	) (*dto.Payment, error)
+	VerifyRefundWebhook(
+		ctx context.Context,
+		payload []byte,
+		header http.Header,
+	) (*dto.Payment, error)
 }

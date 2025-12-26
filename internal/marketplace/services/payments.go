@@ -103,7 +103,7 @@ func (s *PaymentsService) HandleSuccessWebhook(
 ) (*dto.Payment, error) {
 	payment, err := s.provider.VerifySuccessWebhook(ctx, payload, header)
 	if err != nil {
-		return nil, fmt.Errorf("handling payment success webhook: %w", err)
+		return nil, fmt.Errorf("verifying payment success webhook: %w", err)
 	}
 
 	_, err = s.paymentsRepo.SavePayment(ctx, payment)
@@ -112,6 +112,25 @@ func (s *PaymentsService) HandleSuccessWebhook(
 	}
 
 	return payment, nil
+}
+
+// HandleRefundWebhook handles bussines logic for payment refund webhook.
+func (s *PaymentsService) HandleRefundWebhook(
+	ctx context.Context,
+	payload []byte,
+	header http.Header,
+) (*dto.Payment, error) {
+	payment, err := s.provider.VerifyRefundWebhook(ctx, payload, header)
+	if err != nil {
+		return nil, fmt.Errorf("verifying payment refunded webhook: %w", err)
+	}
+
+	ref, err := s.paymentsRepo.RefundPayment(ctx, payment)
+	if err != nil {
+		return nil, fmt.Errorf("refunding payments: %w", err)
+	}
+
+	return ref, nil
 }
 
 func (s *PaymentsService) calculateFee(listing *dto.Listing) int64 {

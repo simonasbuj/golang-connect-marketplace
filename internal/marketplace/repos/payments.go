@@ -17,6 +17,7 @@ type PaymentsRepo interface {
 		provider dto.Provider,
 	) (*dto.SellerAccount, error)
 	SavePayment(ctx context.Context, payment *dto.Payment) (*dto.Payment, error)
+	RefundPayment(ctx context.Context, payment *dto.Payment) (*dto.Payment, error)
 }
 
 type paymentsRepo struct {
@@ -110,6 +111,53 @@ func (r *paymentsRepo) SavePayment(
 	_, err = tx.ExecContext(ctx, updateListingQ, payment.ListingID)
 	if err != nil {
 		return nil, fmt.Errorf("setting listing status to sold: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"committing transcation for saving payment + uptading listing: %w",
+			err,
+		)
+	}
+
+	return payment, nil
+}
+
+func (r *paymentsRepo) RefundPayment(
+	ctx context.Context,
+	payment *dto.Payment,
+) (*dto.Payment, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("starting db transaction: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	var updatedPayment dto.Payment
+
+	refundPaymentQ := `
+		UPDATE payments.payments SET refunded_at = Now() WHERE provider_payment_id = $1
+		RETURNING *
+	`
+
+	err = tx.GetContext(ctx, &updatedPayment, refundPaymentQ, payment.ProviderPaymentID)
+	if err != nil {
+		return nil, fmt.Errorf("setting refunded_at for a payment in database: %w", err)
+	}
+
+	updateListingQ := `
+		UPDATE listings.listings SET status = 'refunded' WHERE id = $1 
+	`
+
+	_, err = tx.ExecContext(ctx, updateListingQ, payment.ListingID)
+	if err != nil {
+		return nil, fmt.Errorf("setting listing status to refunded: %w", err)
 	}
 
 	err = tx.Commit()
