@@ -111,16 +111,6 @@ func (s *PaymentsService) HandleSuccessWebhook(
 		return nil, fmt.Errorf("saving payment: %w", err)
 	}
 
-	updateListing := &dto.Listing{ //nolint:exhaustruct
-		ID:     payment.ListingID,
-		Status: dto.ListingStatusSold,
-	}
-
-	_, err = s.listingsRepo.UpdateListing(ctx, updateListing)
-	if err != nil {
-		return nil, fmt.Errorf("updating listing: %w", err)
-	}
-
 	return payment, nil
 }
 
