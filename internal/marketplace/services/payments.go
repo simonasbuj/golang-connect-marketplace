@@ -6,6 +6,7 @@ import (
 	"golang-connect-marketplace/internal/marketplace/dto"
 	"golang-connect-marketplace/internal/marketplace/paymentproviders"
 	"golang-connect-marketplace/internal/marketplace/repos"
+	"net/http"
 )
 
 const (
@@ -92,6 +93,25 @@ func (s *PaymentsService) CreateCheckoutSession(
 	}
 
 	return resp, nil
+}
+
+// HandleSuccessWebhook handles bussines logic for payment success webhook.
+func (s *PaymentsService) HandleSuccessWebhook(
+	ctx context.Context,
+	payload []byte,
+	header http.Header,
+) (*dto.Payment, error) {
+	payment, err := s.provider.VerifySuccessWebhook(ctx, payload, header)
+	if err != nil {
+		return nil, fmt.Errorf("handling payment success webhook: %w", err)
+	}
+
+	_, err = s.paymentsRepo.SavePayment(ctx, payment)
+	if err != nil {
+		return nil, fmt.Errorf("saving payment: %w", err)
+	}
+
+	return payment, nil
 }
 
 func (s *PaymentsService) calculateFee(listing *dto.Listing) int64 {

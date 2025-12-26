@@ -3,6 +3,7 @@ package paymentproviders
 import (
 	"context"
 	"golang-connect-marketplace/internal/marketplace/dto"
+	"net/http"
 )
 
 // PaymentProvider is an interface for payment-related operations.
@@ -23,4 +24,9 @@ type PaymentProvider interface {
 		listing *dto.Listing,
 		feeAmount int64,
 	) (*dto.CheckoutSessionResponse, error)
+	VerifySuccessWebhook(
+		ctx context.Context,
+		payload []byte,
+		header http.Header,
+	) (*dto.Payment, error)
 }

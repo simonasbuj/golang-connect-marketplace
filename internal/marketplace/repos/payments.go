@@ -16,6 +16,7 @@ type PaymentsRepo interface {
 		userID, sellerID string,
 		provider dto.Provider,
 	) (*dto.SellerAccount, error)
+	SavePayment(ctx context.Context, payment *dto.Payment) (*dto.Payment, error)
 }
 
 type paymentsRepo struct {
@@ -72,4 +73,52 @@ func (r *paymentsRepo) UpdateSellerID(
 	}
 
 	return &resp, nil
+}
+
+func (r *paymentsRepo) SavePayment(
+	ctx context.Context,
+	payment *dto.Payment,
+) (*dto.Payment, error) {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("starting db transaction: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	insertPaymentQ := `
+		INSERT INTO payments.payments 
+			(id, listing_id, buyer_id, provider_payment_id, provider, amount_in_cents, fee_amount_in_cents, currency) 
+		VALUES 
+			(:id, :listing_id, :buyer_id, :provider_payment_id, :provider, :amount_in_cents, :fee_amount_in_cents, :currency) 
+		RETURNING *
+	`
+
+	_, err = tx.NamedExecContext(ctx, insertPaymentQ, payment)
+	if err != nil {
+		return nil, fmt.Errorf("inserting payment into database: %w", err)
+	}
+
+	updateListingQ := `
+		UPDATE listings.listings SET status = 'sold' WHERE id = $1 
+	`
+
+	_, err = tx.ExecContext(ctx, updateListingQ, payment.ListingID)
+	if err != nil {
+		return nil, fmt.Errorf("setting listing status to sold: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"committing transcation for saving payment + uptading listing: %w",
+			err,
+		)
+	}
+
+	return payment, nil
 }
