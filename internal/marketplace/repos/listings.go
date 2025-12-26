@@ -23,7 +23,7 @@ type ListingsRepo interface {
 	GetListingByID(ctx context.Context, listingID string) (*dto.Listing, error)
 	AddListingImage(ctx context.Context, listingID, path string) (*dto.ListingImage, error)
 	DeleteListingImage(ctx context.Context, req *dto.DeleteImageRequest) error
-	UpdateListing(ctx context.Context, listing *dto.Listing) (*dto.Listing, error)
+	UpdateListing(ctx context.Context, req *dto.UpdateListingRequest) (*dto.Listing, error)
 }
 
 type listingsRepo struct {
@@ -209,7 +209,7 @@ func (r *listingsRepo) DeleteListingImage(ctx context.Context, req *dto.DeleteIm
 
 func (r *listingsRepo) UpdateListing(
 	ctx context.Context,
-	listing *dto.Listing,
+	req *dto.UpdateListingRequest,
 ) (*dto.Listing, error) {
 	query := `
 		UPDATE listings.listings
@@ -219,22 +219,19 @@ func (r *listingsRepo) UpdateListing(
 			description  = COALESCE(NULLIF(:description, ''), description),
 			price_in_cents  = COALESCE(NULLIF(:price_in_cents, 0), price_in_cents),
 			currency  = COALESCE(NULLIF(:currency, ''), currency),
-			status = CASE
-						WHEN :status = '' THEN status
-						ELSE :status
-					 END,
+			status = COALESCE(:status, status),
 			updated_at = NOW()
 		WHERE id = :id
 	`
 
-	row, err := r.db.NamedQueryContext(ctx, query, listing)
+	row, err := r.db.NamedQueryContext(ctx, query, req)
 	if err != nil {
 		return nil, fmt.Errorf("updating listing in database: %w", err)
 	}
 
 	defer func() { _ = row.Close() }()
 
-	updatedListing, err := r.GetListingByID(ctx, listing.ID)
+	updatedListing, err := r.GetListingByID(ctx, req.ID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching updated listing: %w", err)
 	}

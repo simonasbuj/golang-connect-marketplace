@@ -177,3 +177,30 @@ func (s *ListingsService) GetListingByID(
 
 	return listing, nil
 }
+
+// UpdateListing handles logic for updating a listing.
+func (s *ListingsService) UpdateListing(
+	ctx context.Context,
+	req *dto.UpdateListingRequest,
+	user *authDto.UserClaims,
+) (*dto.Listing, error) {
+	listing, err := s.repo.GetListingByID(ctx, req.ID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listing: %w", err)
+	}
+
+	if listing.UserID != user.ID && user.Role != authDto.UserRoleAdmin {
+		return nil, ErrForbidden
+	}
+
+	if listing.Status != dto.ListingStatusOpen && user.Role != authDto.UserRoleAdmin {
+		return nil, ErrListingIsNotOpen
+	}
+
+	updatedListing, err := s.repo.UpdateListing(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("updating listing: %w", err)
+	}
+
+	return updatedListing, nil
+}

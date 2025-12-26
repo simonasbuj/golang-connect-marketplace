@@ -158,3 +158,33 @@ func (h *ListingsHandler) HandleGetListing(c echo.Context) error {
 
 	return r.JSONSuccess(c, "fetched listing", resp)
 }
+
+// HandleUpdateListing handles requests to update a listing.
+func (h *ListingsHandler) HandleUpdateListing(c echo.Context) error {
+	user, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	listingID := c.Param(listingIDParamName)
+
+	var reqDto dto.UpdateListingRequest
+
+	reqDto.ID = listingID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return r.JSONError(c, err.Error(), err)
+	}
+
+	resp, err := h.svc.UpdateListing(c.Request().Context(), &reqDto, user)
+	if err != nil {
+		if errors.Is(err, services.ErrForbidden) {
+			return r.JSONError(c, "forbidden", err, http.StatusForbidden)
+		}
+
+		return r.JSONError(c, "failed to update listing", err)
+	}
+
+	return r.JSONSuccess(c, "updated listing", resp)
+}

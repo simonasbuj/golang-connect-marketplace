@@ -94,3 +94,14 @@ func (li *ListingImages) Scan(value any) error {
 
 	return nil
 }
+
+// UpdateListingRequest represents payload sent when adding updating a listing.
+type UpdateListingRequest struct {
+	ID           string         `json:"id"             db:"id"`
+	CategoryID   string         `json:"category_id"    db:"category_id"`
+	Title        string         `json:"title"          db:"title"          validate:"omitempty,min=8,max=100"`
+	Description  string         `json:"description"    db:"description"`
+	PriceInCents int            `json:"price_in_cents" db:"price_in_cents" validate:"omitempty,min=1000"`
+	Currency     string         `json:"currency"       db:"currency"       validate:"omitempty,len=3"`
+	Status       *ListingStatus `json:"status"         db:"status"`
+}
