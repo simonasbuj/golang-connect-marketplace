@@ -71,7 +71,7 @@ func main() {
 func setupAuth(e *echo.Echo, db *sqlx.DB, cfg *config.AuthConfig) *authSvc.Service {
 	repo := authRepo.New(db)
 	svc := authSvc.New(repo, cfg)
-	hndl := authHndl.NewHandler(svc)
+	hndl := authHndl.NewHandler(svc, cfg)
 	authRoutes.RegisterRoutes(e, hndl, svc)
 
 	return svc

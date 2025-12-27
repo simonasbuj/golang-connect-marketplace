@@ -28,6 +28,7 @@ type AuthConfig struct {
 	TokenValidSeconds        int    `env:"MARKET_TOKEN_VALID_SECONDS"`
 	RefreshTokenValidSeconds int    `env:"MARKET_REFRESH_TOKEN_VALID_SECONDS"`
 	RefreshTokenLength       int    `env:"MARKET_REFRESH_TOKEN_LENGTH"`
+	RefreshTokenCookieSecure bool   `env:"MARKET_REFRESH_TOKEN_COOKIE_SECURE"`
 }
 
 // StorageConfig holds settings for storage.
