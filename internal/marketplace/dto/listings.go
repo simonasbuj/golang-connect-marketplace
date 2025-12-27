@@ -32,19 +32,20 @@ const (
 
 // Listing represents a marketplace listing created by a user.
 type Listing struct {
-	ID           string        `json:"id"             db:"id"`
-	UserID       string        `json:"user_id"        db:"user_id"`
-	CategoryID   string        `json:"category_id"    db:"category_id"    validate:"required"`
-	Title        string        `json:"title"          db:"title"          validate:"required,min=8,max=100"`
-	Description  string        `json:"description"    db:"description"    validate:"required"`
-	PriceInCents int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1000"`
-	Currency     string        `json:"currency"       db:"currency"       validate:"required,len=3"`
-	Seller       SellerAccount `json:"seller"         db:"seller"`
-	Status       ListingStatus `json:"status"         db:"status"`
-	Images       ListingImages `json:"images"         db:"images"`
-	CreatedAt    time.Time     `json:"created_at"     db:"created_at"`
-	UpdatedAt    time.Time     `json:"updated_at"     db:"updated_at"`
-	DeletedAt    *time.Time    `json:"deleted_at"     db:"deleted_at"`
+	ID            string        `json:"id"             db:"id"`
+	UserID        string        `json:"user_id"        db:"user_id"`
+	CategoryID    string        `json:"category_id"    db:"category_id"    validate:"required"`
+	CategoryTitle string        `json:"category_title" db:"category_title"`
+	Title         string        `json:"title"          db:"title"          validate:"required,min=8,max=100"`
+	Description   string        `json:"description"    db:"description"    validate:"required"`
+	PriceInCents  int           `json:"price_in_cents" db:"price_in_cents" validate:"required,min=1000"`
+	Currency      string        `json:"currency"       db:"currency"       validate:"required,len=3"`
+	Seller        SellerAccount `json:"seller"         db:"seller"`
+	Status        ListingStatus `json:"status"         db:"status"`
+	Images        ListingImages `json:"images"         db:"images"`
+	CreatedAt     time.Time     `json:"created_at"     db:"created_at"`
+	UpdatedAt     time.Time     `json:"updated_at"     db:"updated_at"`
+	DeletedAt     *time.Time    `json:"deleted_at"     db:"deleted_at"`
 }
 
 // AddImagesRequest represents payload sent when adding new images for a listing.
@@ -104,4 +105,27 @@ type UpdateListingRequest struct {
 	PriceInCents int            `json:"price_in_cents" db:"price_in_cents" validate:"omitempty,min=1000"`
 	Currency     string         `json:"currency"       db:"currency"       validate:"omitempty,len=3"`
 	Status       *ListingStatus `json:"status"         db:"status"`
+}
+
+// GetListingsRequest represents payload sent when fetching a list of listings.
+type GetListingsRequest struct {
+	Limit          int     `json:"limit"           validate:"omitempty,min=1,max=100" query:"limit"`
+	Page           int     `json:"page"            validate:"omitempty,min=1"         query:"page"`
+	CategoryFilter *string `json:"category_filter" validate:"-"                       query:"category_filter"`
+	ListingFilter  *string `json:"listing_filter"  validate:"-"                       query:"listing_filter"`
+}
+
+// PaginationMeta represents pagination metadata sent back to the client.
+type PaginationMeta struct {
+	Limit          int     `json:"limit"`
+	Page           int     `json:"page"`
+	Total          int     `json:"total"`
+	CategoryFilter *string `json:"category_filter"`
+	ListingFilter  *string `json:"listing_filter"`
+}
+
+// GetListingsResponse represents payload sent back when fetching a list of listings.
+type GetListingsResponse struct {
+	Meta     PaginationMeta `json:"meta"`
+	Listings []Listing      `json:"listings"`
 }

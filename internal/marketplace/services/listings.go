@@ -204,3 +204,35 @@ func (s *ListingsService) UpdateListing(
 
 	return updatedListing, nil
 }
+
+// GetListings handles logic for fetching a list of listing.
+func (s *ListingsService) GetListings(
+	ctx context.Context,
+	req *dto.GetListingsRequest,
+) (*dto.GetListingsResponse, error) {
+	if req.Limit <= 0 {
+		req.Limit = 10
+	}
+
+	if req.Page < 0 {
+		req.Page = 0
+	}
+
+	listings, err := s.repo.GetListings(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listings: %w", err)
+	}
+
+	resp := &dto.GetListingsResponse{
+		Meta: dto.PaginationMeta{
+			Limit:          req.Limit,
+			Page:           req.Page,
+			CategoryFilter: req.CategoryFilter,
+			ListingFilter:  req.ListingFilter,
+			Total:          len(listings),
+		},
+		Listings: listings,
+	}
+
+	return resp, nil
+}
