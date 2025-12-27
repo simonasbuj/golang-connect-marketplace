@@ -228,6 +228,7 @@ func (s *ListingsService) GetListings(
 			Limit:          req.Limit,
 			Page:           req.Page,
 			CategoryFilter: req.CategoryFilter,
+			ListingFilter:  req.ListingFilter,
 			Total:          len(listings),
 		},
 		Listings: listings,

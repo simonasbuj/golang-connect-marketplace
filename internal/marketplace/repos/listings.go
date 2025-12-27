@@ -272,6 +272,7 @@ func (r *listingsRepo) GetListings(
 		WHERE 
 			l.status = 'open'
 			AND ($3::text IS NULL OR c.title ILIKE '%' || $3 || '%')
+			AND ($4::text IS NULL OR l.title ILIKE '%' || $4 || '%')
 		GROUP BY l.id, a.id, sa.id, c.title
 		ORDER BY l.created_at DESC
 		LIMIT $1 OFFSET $2;
@@ -286,6 +287,7 @@ func (r *listingsRepo) GetListings(
 		req.Limit,
 		req.Page*req.Limit,
 		req.CategoryFilter,
+		req.ListingFilter,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("fetching listings from database: %w", err)
