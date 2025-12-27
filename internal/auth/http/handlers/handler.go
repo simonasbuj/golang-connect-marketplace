@@ -7,7 +7,7 @@ import (
 	"golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/auth/middleware"
 	"golang-connect-marketplace/internal/auth/service"
-	"golang-connect-marketplace/pkg/responses"
+	r "golang-connect-marketplace/pkg/responses"
 	"golang-connect-marketplace/pkg/validation"
 	"net/http"
 	"time"
@@ -37,20 +37,15 @@ func (h *Handler) HandleRegister(c echo.Context) error {
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		return responses.JSONError(c, err.Error(), err)
+		return r.JSONError(c, err.Error(), err)
 	}
 
 	respDto, err := h.svc.Register(c.Request().Context(), &reqDto)
 	if err != nil {
-		return responses.JSONError(
-			c,
-			"failed to register user",
-			err,
-			http.StatusInternalServerError,
-		)
+		return r.JSONError(c, "failed to register user", err, http.StatusInternalServerError)
 	}
 
-	return responses.JSONSuccess(c, "new user registered", respDto)
+	return r.JSONSuccess(c, "new user registered", respDto)
 }
 
 // HandleLogin handles requests to login user.
@@ -59,35 +54,25 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		return responses.JSONError(c, err.Error(), err)
+		return r.JSONError(c, err.Error(), err)
 	}
 
 	respDto, err := h.svc.Login(c.Request().Context(), &reqDto)
 	if err != nil {
-		return responses.JSONError(
-			c,
-			"failed to login user",
-			err,
-			http.StatusInternalServerError,
-		)
+		return r.JSONError(c, "failed to login user", err, http.StatusInternalServerError)
 	}
 
 	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
 	c.SetCookie(refreshTokenCookie)
 
-	return responses.JSONSuccess(c, "user logged in successfully", respDto)
+	return r.JSONSuccess(c, "user logged in successfully", respDto)
 }
 
 // HandleRefresh handles requests to refresh token.
 func (h *Handler) HandleRefresh(c echo.Context) error {
 	refreshToken, err := c.Cookie(refreshTokenCookieName)
 	if err != nil {
-		return responses.JSONError(
-			c,
-			"refresh token missing in cookies",
-			err,
-			http.StatusUnauthorized,
-		)
+		return r.JSONError(c, "refresh token missing in cookies", err, http.StatusUnauthorized)
 	}
 
 	reqDto := &dto.RefreshTokenRequest{
@@ -97,21 +82,16 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 	respDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto)
 	if err != nil {
 		if errors.Is(err, service.ErrUnauthorized) {
-			return responses.JSONError(c, "unauthorized", err, http.StatusUnauthorized)
+			return r.JSONError(c, "unauthorized", err, http.StatusUnauthorized)
 		}
 
-		return responses.JSONError(
-			c,
-			"failed to refresh token",
-			err,
-			http.StatusInternalServerError,
-		)
+		return r.JSONError(c, "failed to refresh token", err, http.StatusInternalServerError)
 	}
 
 	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
 	c.SetCookie(refreshTokenCookie)
 
-	return responses.JSONSuccess(c, "refreshed tokens successfully", respDto)
+	return r.JSONSuccess(c, "refreshed tokens successfully", respDto)
 }
 
 // HandleSecret handles auth middleware debugging.
@@ -121,7 +101,7 @@ func (h *Handler) HandleSecret(c echo.Context) error {
 		return err
 	}
 
-	return responses.JSONSuccess(c, "can access", userClaims)
+	return r.JSONSuccess(c, "can access", userClaims)
 }
 
 func (h *Handler) createRefresthTokenCookie(token string) *http.Cookie {
