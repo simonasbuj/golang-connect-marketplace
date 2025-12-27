@@ -43,7 +43,7 @@ type LoginRequest struct {
 // LoginResponse represents the payload sent back to user after loging in.
 type LoginResponse struct {
 	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"-"`
 }
 
 // UserClaims represents user claim saved in jwt token.

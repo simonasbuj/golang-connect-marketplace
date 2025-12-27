@@ -3,25 +3,31 @@ package handlers
 
 import (
 	"errors"
+	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/auth/middleware"
 	"golang-connect-marketplace/internal/auth/service"
 	"golang-connect-marketplace/pkg/responses"
 	"golang-connect-marketplace/pkg/validation"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
+const refreshTokenCookieName = "refresh_token"
+
 // Handler handles authentication-related HTTP requests.
 type Handler struct {
 	svc *service.Service
+	cfg *config.AuthConfig
 }
 
 // NewHandler creates a new Handler for handling authentication requests.
-func NewHandler(svc *service.Service) *Handler {
+func NewHandler(svc *service.Service, cfg *config.AuthConfig) *Handler {
 	return &Handler{
 		svc: svc,
+		cfg: cfg,
 	}
 }
 
@@ -66,22 +72,32 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		)
 	}
 
+	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	c.SetCookie(refreshTokenCookie)
+
 	return responses.JSONSuccess(c, "user logged in successfully", respDto)
 }
 
 // HandleRefresh handles requests to refresh token.
 func (h *Handler) HandleRefresh(c echo.Context) error {
-	var reqDto dto.RefreshTokenRequest
-
-	err := validation.ValidateDto(c, &reqDto)
+	refreshToken, err := c.Cookie(refreshTokenCookieName)
 	if err != nil {
-		return responses.JSONError(c, err.Error(), err)
+		return responses.JSONError(
+			c,
+			"refresh token missing in cookies",
+			err,
+			http.StatusUnauthorized,
+		)
 	}
 
-	respDto, err := h.svc.RefreshToken(c.Request().Context(), &reqDto)
+	reqDto := &dto.RefreshTokenRequest{
+		RefreshToken: refreshToken.Value,
+	}
+
+	respDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto)
 	if err != nil {
 		if errors.Is(err, service.ErrUnauthorized) {
-			return responses.JSONError(c, "unauthorized", err)
+			return responses.JSONError(c, "unauthorized", err, http.StatusUnauthorized)
 		}
 
 		return responses.JSONError(
@@ -91,6 +107,9 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 			http.StatusInternalServerError,
 		)
 	}
+
+	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	c.SetCookie(refreshTokenCookie)
 
 	return responses.JSONSuccess(c, "refreshed tokens successfully", respDto)
 }
@@ -103,4 +122,16 @@ func (h *Handler) HandleSecret(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "can access", userClaims)
+}
+
+func (h *Handler) createRefresthTokenCookie(token string) *http.Cookie {
+	return &http.Cookie{ //nolint:exhaustruct
+		Name:     refreshTokenCookieName,
+		Value:    token,
+		HttpOnly: true,
+		Secure:   h.cfg.RefreshTokenCookieSecure,
+		Path:     "/",
+		Expires:  time.Now().Add(time.Duration(h.cfg.RefreshTokenValidSeconds) * time.Second),
+		MaxAge:   h.cfg.RefreshTokenValidSeconds,
+	}
 }
