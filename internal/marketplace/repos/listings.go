@@ -24,6 +24,7 @@ type ListingsRepo interface {
 	AddListingImage(ctx context.Context, listingID, path string) (*dto.ListingImage, error)
 	DeleteListingImage(ctx context.Context, req *dto.DeleteImageRequest) error
 	UpdateListing(ctx context.Context, req *dto.UpdateListingRequest) (*dto.Listing, error)
+	GetListings(ctx context.Context, req *dto.GetListingsRequest) ([]dto.Listing, error)
 }
 
 type listingsRepo struct {
@@ -139,6 +140,7 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 	query := `
 		SELECT
 			l.*,
+			c.title as "category_title",
 			a.id as "seller.id",
 			a.username as "seller.username",
 			a.created_at as "seller.created_at",
@@ -157,8 +159,9 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 			LEFT JOIN listings.listings_images i ON i.listing_id = l.id
 			LEFT JOIN auth.users a on a.id = l.user_id
 			LEFT JOIN payments.seller_accounts sa on sa.user_id = a.id
+			LEFT JOIN listings.categories c on c.id = l.category_id
 		WHERE l.id = $1
-		GROUP BY l.id, a.id, sa.id
+		GROUP BY l.id, a.id, sa.id, c.title
 	`
 
 	var listing dto.Listing
@@ -237,4 +240,56 @@ func (r *listingsRepo) UpdateListing(
 	}
 
 	return updatedListing, err
+}
+
+func (r *listingsRepo) GetListings(
+	ctx context.Context,
+	req *dto.GetListingsRequest,
+) ([]dto.Listing, error) {
+	query := `
+		SELECT
+			l.*,
+			c.title as "category_title",
+			a.id as "seller.id",
+			a.username as "seller.username",
+			a.created_at as "seller.created_at",
+			sa.id as "seller.seller_id",
+			COALESCE(
+				json_agg(
+					json_build_object(
+						'id', i.id,
+						'listing_id', i.listing_id,
+						'path', i.path
+					)
+				) FILTER (WHERE i.id IS NOT NULL),
+				'[]'
+			) AS images
+		FROM listings.listings l
+			LEFT JOIN listings.listings_images i ON i.listing_id = l.id
+			LEFT JOIN auth.users a on a.id = l.user_id
+			LEFT JOIN payments.seller_accounts sa on sa.user_id = a.id
+			LEFT JOIN listings.categories c on c.id = l.category_id
+		WHERE 
+			l.status = 'open'
+			AND ($3::text IS NULL OR c.title ILIKE '%' || $3 || '%')
+		GROUP BY l.id, a.id, sa.id, c.title
+		ORDER BY l.created_at DESC
+		LIMIT $1 OFFSET $2;
+	`
+
+	listings := []dto.Listing{}
+
+	err := r.db.SelectContext(
+		ctx,
+		&listings,
+		query,
+		req.Limit,
+		req.Page*req.Limit,
+		req.CategoryFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("fetching listings from database: %w", err)
+	}
+
+	return listings, nil
 }

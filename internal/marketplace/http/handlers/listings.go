@@ -144,7 +144,19 @@ func (h *ListingsHandler) HandleDeleteImages(c echo.Context) error {
 
 // HandleGetListings handles requests to get a list of listings.
 func (h *ListingsHandler) HandleGetListings(c echo.Context) error {
-	return r.JSONSuccess(c, "fetched items", nil)
+	var reqDto dto.GetListingsRequest
+
+	err := validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return r.JSONError(c, err.Error(), err)
+	}
+
+	resp, err := h.svc.GetListings(c.Request().Context(), &reqDto)
+	if err != nil {
+		return r.JSONError(c, "failed to fetch listings", err)
+	}
+
+	return r.JSONSuccess(c, "fetched listings", resp)
 }
 
 // HandleGetListing handles requests to get a listing by id.
