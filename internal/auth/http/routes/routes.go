@@ -24,4 +24,7 @@ func RegisterRoutes(e *echo.Echo, h *handlers.Handler, authSvc *service.Service)
 		h.HandleSecret,
 		middleware.AuthenticateMiddleware(authSvc, dto.UserRoleAdmin),
 	)
+
+	auth.GET("/github", h.HandleGithub)
+	auth.GET("/github/callback", h.HandleGithubCallback)
 }

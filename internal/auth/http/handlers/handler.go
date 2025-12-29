@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/auth/middleware"
@@ -102,6 +103,34 @@ func (h *Handler) HandleSecret(c echo.Context) error {
 	}
 
 	return r.JSONSuccess(c, "can access", userClaims)
+}
+
+func (h *Handler) HandleGithub(c echo.Context) error {
+	fmt.Println("----------------------------------------------------")
+	fmt.Println(h.cfg.OAuthConfig.GithubClientID)
+	fmt.Println(h.cfg.OAuthConfig.GithubRedirectURI)
+	url := fmt.Sprintf(
+		"https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=user:email",
+		h.cfg.OAuthConfig.GithubClientID,
+		h.cfg.OAuthConfig.GithubRedirectURI,
+	)
+
+	return c.Redirect(http.StatusTemporaryRedirect, url)
+	// return r.JSONSuccess(c, "github oatuh redirect", url)
+}
+
+func (h *Handler) HandleGithubCallback(c echo.Context) error {
+	code := c.QueryParam("code")
+	if code == "" {
+		return r.JSONError(c, "missing code param in callback url", errors.New("no code in url param"))
+	}
+
+	resp, err := h.svc.HandleGithubCallback(c.Request().Context(), code)
+	if err != nil {
+		return r.JSONError(c, "failed to handle oatuh callback", err)
+	}
+	
+	return r.JSONSuccess(c, "github oauth callback handled", resp)
 }
 
 func (h *Handler) createRefresthTokenCookie(token string) *http.Cookie {

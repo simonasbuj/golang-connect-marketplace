@@ -19,9 +19,11 @@ type Repo interface {
 	CreateUser(ctx context.Context, reqDto *dto.RegisterRequest) (*dto.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*dto.User, error)
 	GetUserByID(ctx context.Context, id string) (*dto.User, error)
+	GetUserByOAuthID(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error)
 	SaveRefreshToken(ctx context.Context, token *dto.RefreshToken) error
 	GetRefreshToken(ctx context.Context, token string) (*dto.RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
+	// CreateOAuthUser(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error)
 }
 
 type repo struct {
@@ -92,6 +94,24 @@ func (r *repo) GetUserByID(ctx context.Context, id string) (*dto.User, error) {
 	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
 		return nil, fmt.Errorf("getting user by id from database: %w", err)
+	}
+
+	return &user, nil
+}
+
+func (r *repo) GetUserByOAuthID(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error) {
+	query := `
+		SELECT a.id, a.email, a.password_hash, a.name, a.lastname, a.username, a.role 
+		FROM auth.users a
+			LEFT JOIN auth.oauth_users o ON o.user_id = a.id
+		WHERE o.provider_user_id = $1 and o.provider = $2
+	`
+
+	var user dto.User
+
+	err := r.db.GetContext(ctx, &user, query, id, provider)
+	if err != nil {
+		return nil, fmt.Errorf("getting user by oatuh id from database: %w", err)
 	}
 
 	return &user, nil
