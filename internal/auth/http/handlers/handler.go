@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"golang-connect-marketplace/config"
 	"golang-connect-marketplace/internal/auth/dto"
 	"golang-connect-marketplace/internal/auth/middleware"
@@ -17,6 +16,9 @@ import (
 )
 
 const refreshTokenCookieName = "refresh_token"
+
+// ErrURLMissingParam is returned when url is missing required param.
+var ErrURLMissingParam = errors.New("url is missing required param")
 
 // Handler handles authentication-related HTTP requests.
 type Handler struct {
@@ -63,7 +65,7 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		return r.JSONError(c, "failed to login user", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "user logged in successfully", respDto)
@@ -89,7 +91,7 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 		return r.JSONError(c, "failed to refresh token", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "refreshed tokens successfully", respDto)
@@ -105,37 +107,9 @@ func (h *Handler) HandleSecret(c echo.Context) error {
 	return r.JSONSuccess(c, "can access", userClaims)
 }
 
-func (h *Handler) HandleGithub(c echo.Context) error {
-	fmt.Println("----------------------------------------------------")
-	fmt.Println(h.cfg.OAuthConfig.GithubClientID)
-	fmt.Println(h.cfg.OAuthConfig.GithubRedirectURI)
-	url := fmt.Sprintf(
-		"https://github.com/login/oauth/authorize?client_id=%s&redirect_uri=%s&scope=user:email",
-		h.cfg.OAuthConfig.GithubClientID,
-		h.cfg.OAuthConfig.GithubRedirectURI,
-	)
-
-	return c.Redirect(http.StatusTemporaryRedirect, url)
-	// return r.JSONSuccess(c, "github oatuh redirect", url)
-}
-
-func (h *Handler) HandleGithubCallback(c echo.Context) error {
-	code := c.QueryParam("code")
-	if code == "" {
-		return r.JSONError(c, "missing code param in callback url", errors.New("no code in url param"))
-	}
-
-	resp, err := h.svc.HandleGithubCallback(c.Request().Context(), code)
-	if err != nil {
-		return r.JSONError(c, "failed to handle oatuh callback", err)
-	}
-	
-	return r.JSONSuccess(c, "github oauth callback handled", resp)
-}
-
-func (h *Handler) createRefresthTokenCookie(token string) *http.Cookie {
+func (h *Handler) createTokenCookie(cookieName, token string) *http.Cookie {
 	return &http.Cookie{ //nolint:exhaustruct
-		Name:     refreshTokenCookieName,
+		Name:     cookieName,
 		Value:    token,
 		HttpOnly: true,
 		Secure:   h.cfg.RefreshTokenCookieSecure,

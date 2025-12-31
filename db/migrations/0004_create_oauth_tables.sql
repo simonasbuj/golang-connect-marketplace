@@ -10,7 +10,10 @@ CREATE TABLE IF NOT EXISTS auth.oauth_users (
     user_id VARCHAR(30) NOT NULL 
         REFERENCES auth.users(id),
     provider_user_id VARCHAR(50) NOT NULL,
-    provider auth.oauth_providers NOT NULL
+    provider auth.oauth_providers NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
 );
 
 -- +goose StatementEnd

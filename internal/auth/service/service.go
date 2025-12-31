@@ -14,6 +14,9 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/google"
 )
 
 var (
@@ -31,15 +34,35 @@ var (
 
 // Service provides user and auth related operations.
 type Service struct {
-	repo repo.Repo
-	cfg  *config.AuthConfig
+	repo        repo.Repo
+	cfg         *config.AuthConfig
+	oauthGithub *oauth2.Config
+	oauthGoogle *oauth2.Config
 }
 
 // New creates a new Service instance.
 func New(repo repo.Repo, cfg *config.AuthConfig) *Service {
+	oauthGithub := &oauth2.Config{
+		ClientID:     cfg.OAuthConfig.Github.ClientID,
+		ClientSecret: cfg.OAuthConfig.Github.ClientSecret,
+		RedirectURL:  cfg.OAuthConfig.Github.RedirectURI,
+		Scopes:       []string{"user:email"},
+		Endpoint:     github.Endpoint,
+	}
+
+	oauthGoogle := &oauth2.Config{
+		ClientID:     cfg.OAuthConfig.Google.ClientID,
+		ClientSecret: cfg.OAuthConfig.Google.ClientSecret,
+		RedirectURL:  cfg.OAuthConfig.Google.RedirectURI,
+		Scopes:       []string{"openid", "email", "profile"},
+		Endpoint:     google.Endpoint,
+	}
+
 	return &Service{
-		repo: repo,
-		cfg:  cfg,
+		repo:        repo,
+		cfg:         cfg,
+		oauthGithub: oauthGithub,
+		oauthGoogle: oauthGoogle,
 	}
 }
 
@@ -72,25 +95,9 @@ func (s *Service) Login(ctx context.Context, reqDto *dto.LoginRequest) (*dto.Log
 		return nil, fmt.Errorf("verifying password: %w", err)
 	}
 
-	accessToken, err := s.generateJWT(user, s.cfg.TokenValidSeconds)
+	respDto, err := s.createTokens(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("generating access token: %w", err)
-	}
-
-	refreshToken := &dto.RefreshToken{
-		Token:     strings.Trim(generate.ID("", s.cfg.RefreshTokenLength), "_"),
-		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(time.Duration(s.cfg.RefreshTokenValidSeconds) * time.Second),
-	}
-
-	err = s.repo.SaveRefreshToken(ctx, refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("saving refresh token: %w", err)
-	}
-
-	respDto := &dto.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken.Token,
+		return nil, fmt.Errorf("creting tokens: %w", err)
 	}
 
 	return respDto, nil
@@ -115,30 +122,14 @@ func (s *Service) RefreshToken(
 		return nil, fmt.Errorf("fetching user: %w", err)
 	}
 
-	accessToken, err := s.generateJWT(user, s.cfg.TokenValidSeconds)
+	respDto, err := s.createTokens(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("generating access token: %w", err)
-	}
-
-	refreshToken := &dto.RefreshToken{
-		Token:     strings.Trim(generate.ID("", s.cfg.RefreshTokenLength), "_"),
-		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(time.Duration(s.cfg.RefreshTokenValidSeconds) * time.Second),
-	}
-
-	err = s.repo.SaveRefreshToken(ctx, refreshToken)
-	if err != nil {
-		return nil, fmt.Errorf("saving refresh token: %w", err)
+		return nil, fmt.Errorf("creting tokens: %w", err)
 	}
 
 	err = s.repo.DeleteRefreshToken(ctx, reqDto.RefreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("deleting previous refresh token: %w", err)
-	}
-
-	respDto := &dto.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken.Token,
 	}
 
 	return respDto, nil
@@ -208,4 +199,27 @@ func (s *Service) generateJWT(user *dto.User, ttlSeconds int) (string, error) {
 	}
 
 	return jwtToken, nil
+}
+
+func (s *Service) createTokens(ctx context.Context, user *dto.User) (*dto.LoginResponse, error) {
+	accessToken, err := s.generateJWT(user, s.cfg.TokenValidSeconds)
+	if err != nil {
+		return nil, fmt.Errorf("generating access token: %w", err)
+	}
+
+	refreshToken := &dto.RefreshToken{
+		Token:     strings.Trim(generate.ID("", s.cfg.RefreshTokenLength), "_"),
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(time.Duration(s.cfg.RefreshTokenValidSeconds) * time.Second),
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("saving refresh token: %w", err)
+	}
+
+	return &dto.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken.Token,
+	}, nil
 }

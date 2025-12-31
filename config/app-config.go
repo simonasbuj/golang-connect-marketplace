@@ -29,15 +29,27 @@ type AuthConfig struct {
 	RefreshTokenValidSeconds int    `env:"MARKET_REFRESH_TOKEN_VALID_SECONDS"`
 	RefreshTokenLength       int    `env:"MARKET_REFRESH_TOKEN_LENGTH"`
 	RefreshTokenCookieSecure bool   `env:"MARKET_REFRESH_TOKEN_COOKIE_SECURE"`
-	OAuthConfig OAuthConfig 
-
+	OAuthConfig              OAuthConfig
 }
 
-// AuthConfig holds settings and secrets for oauth.
+// OAuthConfig holds settings and secrets for oauth providers.
 type OAuthConfig struct {
-	GithubClientID     string `env:"OAUTH_GITHUB_CLIENT_ID"`
-	GithubClientSecret string `env:"OAUTH_GITHUB_CLIENT_SECRET"`
-	GithubRedirectURI  string `env:"OAUTH_GITHUB_REDIRECT_URI"`
+	Github Github
+	Google Google
+}
+
+// Github holds secrets and settings for github oauth.
+type Github struct {
+	ClientID     string `env:"OAUTH_GITHUB_CLIENT_ID"`
+	ClientSecret string `env:"OAUTH_GITHUB_CLIENT_SECRET"`
+	RedirectURI  string `env:"OAUTH_GITHUB_REDIRECT_URI"`
+}
+
+// Google holds secrets and settings for github oauth.
+type Google struct {
+	ClientID     string `env:"OAUTH_GOOGLE_CLIENT_ID"`
+	ClientSecret string `env:"OAUTH_GOOGLE_CLIENT_SECRET"`
+	RedirectURI  string `env:"OAUTH_GOOGLE_REDIRECT_URI"`
 }
 
 // StorageConfig holds settings for storage.

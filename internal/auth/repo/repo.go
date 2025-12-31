@@ -23,7 +23,7 @@ type Repo interface {
 	SaveRefreshToken(ctx context.Context, token *dto.RefreshToken) error
 	GetRefreshToken(ctx context.Context, token string) (*dto.RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
-	// CreateOAuthUser(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error)
+	CreateOAuthUser(ctx context.Context, req *dto.OAuthUser) (*dto.OAuthUser, error)
 }
 
 type repo struct {
@@ -99,7 +99,11 @@ func (r *repo) GetUserByID(ctx context.Context, id string) (*dto.User, error) {
 	return &user, nil
 }
 
-func (r *repo) GetUserByOAuthID(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error) {
+func (r *repo) GetUserByOAuthID(
+	ctx context.Context,
+	id string,
+	provider dto.OAuthProvider,
+) (*dto.User, error) {
 	query := `
 		SELECT a.id, a.email, a.password_hash, a.name, a.lastname, a.username, a.role 
 		FROM auth.users a
@@ -154,4 +158,33 @@ func (r *repo) DeleteRefreshToken(ctx context.Context, tokenStr string) error {
 	}
 
 	return nil
+}
+
+func (r *repo) CreateOAuthUser(ctx context.Context, req *dto.OAuthUser) (*dto.OAuthUser, error) {
+	req.ID = generate.ID("oauth")
+	q := `
+		INSERT INTO auth.oauth_users (id, user_id, provider_user_id, provider)
+		VALUES(:id, :user_id, :provider_user_id, :provider)
+		RETURNING id, user_id, provider_user_id, provider
+	`
+
+	row, err := r.db.NamedQueryContext(ctx, q, req)
+	if err != nil {
+		return nil, fmt.Errorf("inserting oauth user into database: %w", err)
+	}
+
+	defer func() { _ = row.Close() }()
+
+	if !row.Next() {
+		return nil, ErrNoRowsReturned
+	}
+
+	var user dto.OAuthUser
+
+	err = row.StructScan(&user)
+	if err != nil {
+		return nil, fmt.Errorf("scanning results into oauth user dto: %w", err)
+	}
+
+	return &user, nil
 }
