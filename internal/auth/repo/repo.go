@@ -19,9 +19,11 @@ type Repo interface {
 	CreateUser(ctx context.Context, reqDto *dto.RegisterRequest) (*dto.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*dto.User, error)
 	GetUserByID(ctx context.Context, id string) (*dto.User, error)
+	GetUserByOAuthID(ctx context.Context, id string, provider dto.OAuthProvider) (*dto.User, error)
 	SaveRefreshToken(ctx context.Context, token *dto.RefreshToken) error
 	GetRefreshToken(ctx context.Context, token string) (*dto.RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
+	CreateOAuthUser(ctx context.Context, req *dto.OAuthUser) (*dto.OAuthUser, error)
 }
 
 type repo struct {
@@ -97,6 +99,28 @@ func (r *repo) GetUserByID(ctx context.Context, id string) (*dto.User, error) {
 	return &user, nil
 }
 
+func (r *repo) GetUserByOAuthID(
+	ctx context.Context,
+	id string,
+	provider dto.OAuthProvider,
+) (*dto.User, error) {
+	query := `
+		SELECT a.id, a.email, a.password_hash, a.name, a.lastname, a.username, a.role 
+		FROM auth.users a
+			LEFT JOIN auth.oauth_users o ON o.user_id = a.id
+		WHERE o.provider_user_id = $1 and o.provider = $2
+	`
+
+	var user dto.User
+
+	err := r.db.GetContext(ctx, &user, query, id, provider)
+	if err != nil {
+		return nil, fmt.Errorf("getting user by oatuh id from database: %w", err)
+	}
+
+	return &user, nil
+}
+
 func (r *repo) SaveRefreshToken(ctx context.Context, token *dto.RefreshToken) error {
 	query := `INSERT INTO auth.refresh_tokens (token, user_id, expires_at) VALUES (:token,:user_id,:expires_at)`
 
@@ -134,4 +158,33 @@ func (r *repo) DeleteRefreshToken(ctx context.Context, tokenStr string) error {
 	}
 
 	return nil
+}
+
+func (r *repo) CreateOAuthUser(ctx context.Context, req *dto.OAuthUser) (*dto.OAuthUser, error) {
+	req.ID = generate.ID("oauth")
+	q := `
+		INSERT INTO auth.oauth_users (id, user_id, provider_user_id, provider)
+		VALUES(:id, :user_id, :provider_user_id, :provider)
+		RETURNING id, user_id, provider_user_id, provider
+	`
+
+	row, err := r.db.NamedQueryContext(ctx, q, req)
+	if err != nil {
+		return nil, fmt.Errorf("inserting oauth user into database: %w", err)
+	}
+
+	defer func() { _ = row.Close() }()
+
+	if !row.Next() {
+		return nil, ErrNoRowsReturned
+	}
+
+	var user dto.OAuthUser
+
+	err = row.StructScan(&user)
+	if err != nil {
+		return nil, fmt.Errorf("scanning results into oauth user dto: %w", err)
+	}
+
+	return &user, nil
 }

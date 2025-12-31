@@ -15,9 +15,11 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/stripe/stripe-go/v84 v84.1.0
 	golang.org/x/crypto v0.46.0
+	golang.org/x/oauth2 v0.34.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.11 // indirect

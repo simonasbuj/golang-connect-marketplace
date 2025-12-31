@@ -17,6 +17,9 @@ import (
 
 const refreshTokenCookieName = "refresh_token"
 
+// ErrURLMissingParam is returned when url is missing required param.
+var ErrURLMissingParam = errors.New("url is missing required param")
+
 // Handler handles authentication-related HTTP requests.
 type Handler struct {
 	svc *service.Service
@@ -62,7 +65,7 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		return r.JSONError(c, "failed to login user", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "user logged in successfully", respDto)
@@ -88,7 +91,7 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 		return r.JSONError(c, "failed to refresh token", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createRefresthTokenCookie(respDto.RefreshToken)
+	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "refreshed tokens successfully", respDto)
@@ -104,9 +107,9 @@ func (h *Handler) HandleSecret(c echo.Context) error {
 	return r.JSONSuccess(c, "can access", userClaims)
 }
 
-func (h *Handler) createRefresthTokenCookie(token string) *http.Cookie {
+func (h *Handler) createTokenCookie(cookieName, token string) *http.Cookie {
 	return &http.Cookie{ //nolint:exhaustruct
-		Name:     refreshTokenCookieName,
+		Name:     cookieName,
 		Value:    token,
 		HttpOnly: true,
 		Secure:   h.cfg.RefreshTokenCookieSecure,
