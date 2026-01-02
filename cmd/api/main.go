@@ -62,7 +62,7 @@ func main() {
 	listingsRepo := setupListings(e, db, authSvc, &cfg.StorageConfig)
 	setupPayments(e, db, authSvc, listingsRepo, &cfg.PaymentsConfig)
 
-	err = e.Start(cfg.APIConfig.HTTPAddress)
+	err = e.Start("0.0.0.0:6767")
 	if err != nil {
 		log.Error(err)
 	}
