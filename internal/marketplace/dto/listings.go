@@ -14,6 +14,7 @@ type Category struct {
 	ID          string `json:"id"          db:"id"`
 	Title       string `json:"title"       db:"title"       validate:"required,max=30"`
 	Description string `json:"description" db:"description"`
+	Color       string `json:"color"       db:"color"       validate:"required,len=7"`
 }
 
 // ListingStatus represents the current lifecycle state of a marketplace listing.

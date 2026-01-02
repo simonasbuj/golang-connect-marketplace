@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS listings.categories (
     id VARCHAR(30) PRIMARY KEY,
     title VARCHAR(30) NOT NULL UNIQUE,
     description TEXT,
+    color VARCHAR(7) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ
