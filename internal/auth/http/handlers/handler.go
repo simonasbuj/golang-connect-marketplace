@@ -65,7 +65,7 @@ func (h *Handler) HandleLogin(c echo.Context) error {
 		return r.JSONError(c, "failed to login user", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
+	refreshTokenCookie := h.createTokenCookie(refreshTokenCookieName, respDto.RefreshToken)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "user logged in successfully", respDto)
@@ -91,7 +91,7 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 		return r.JSONError(c, "failed to refresh token", err, http.StatusInternalServerError)
 	}
 
-	refreshTokenCookie := h.createTokenCookie(respDto.RefreshToken, refreshTokenCookieName)
+	refreshTokenCookie := h.createTokenCookie(refreshTokenCookieName, respDto.RefreshToken)
 	c.SetCookie(refreshTokenCookie)
 
 	return r.JSONSuccess(c, "refreshed tokens successfully", respDto)
