@@ -50,8 +50,17 @@ func (s *ListingsService) CreateCategory(
 	ctx context.Context,
 	req *dto.Category,
 ) (*dto.Category, error) {
+	path, err := s.storage.StoreImage(ctx, req.FileHeader, "categories")
+	if err != nil {
+		return nil, fmt.Errorf("storing category image: %w", err)
+	}
+
+	req.ImagePath = path
+
 	resp, err := s.repo.CreateCategory(ctx, req)
 	if err != nil {
+		_ = s.storage.DeleteImage(ctx, path)
+
 		return nil, fmt.Errorf("creating category: %w", err)
 	}
 
