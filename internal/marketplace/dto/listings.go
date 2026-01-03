@@ -11,10 +11,12 @@ import (
 
 // Category represents category model.
 type Category struct {
-	ID          string `json:"id"          db:"id"`
-	Title       string `json:"title"       db:"title"       validate:"required,max=30"`
-	Description string `json:"description" db:"description"`
-	Color       string `json:"color"       db:"color"       validate:"required,len=7"`
+	ID          string                `json:"id"          form:"-"           db:"id"`
+	Title       string                `json:"title"       form:"title"       db:"title"       validate:"required,max=30"`
+	Description string                `json:"description" form:"description" db:"description"`
+	Color       string                `json:"color"       form:"Color"       db:"color"       validate:"required,len=7"`
+	ImagePath   string                `json:"image_path"  form:"-"           db:"image_path"`
+	FileHeader  *multipart.FileHeader `json:"-"           form:"image"       db:"-"           validate:"required"`
 }
 
 // ListingStatus represents the current lifecycle state of a marketplace listing.

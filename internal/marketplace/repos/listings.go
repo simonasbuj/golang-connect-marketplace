@@ -43,9 +43,9 @@ func (r *listingsRepo) CreateCategory(
 	req.ID = generate.ID("cat")
 
 	query := `
-		INSERT INTO listings.categories (id, title, description, color) 
-		VALUES (:id, :title, :description, :color)
-		RETURNING id, title, description
+		INSERT INTO listings.categories (id, title, description, color, image_path) 
+		VALUES (:id, :title, :description, :color, :image_path)
+		RETURNING id, title, description, color, image_path
 	`
 
 	row, err := r.db.NamedQueryContext(ctx, query, req)
@@ -74,7 +74,7 @@ func (r *listingsRepo) GetCategories(ctx context.Context) ([]dto.Category, error
 	categories := []dto.Category{}
 
 	query := `
-		SELECT id, title, description, color
+		SELECT id, title, description, color, image_path
 		FROM listings.categories
 		WHERE deleted_at IS NULL
 		ORDER BY title
