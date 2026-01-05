@@ -97,6 +97,28 @@ func (h *Handler) HandleRefresh(c echo.Context) error {
 	return r.JSONSuccess(c, "refreshed tokens successfully", respDto)
 }
 
+// HandleLogout handles requests to remove refresh token cookie.
+func (h *Handler) HandleLogout(c echo.Context) error {
+	refreshToken, err := c.Cookie(refreshTokenCookieName)
+	if err != nil {
+		return r.JSONError(c, "refresh token missing in cookies", err, http.StatusUnauthorized)
+	}
+
+	reqDto := &dto.RefreshTokenRequest{
+		RefreshToken: refreshToken.Value,
+	}
+
+	err = h.svc.Logout(c.Request().Context(), reqDto)
+	if err != nil {
+		return r.JSONError(c, "faile to delete refresh token", err, http.StatusInternalServerError)
+	}
+
+	emptyCookie := h.getExpiredCookie(refreshTokenCookieName)
+	c.SetCookie(emptyCookie)
+
+	return r.JSONSuccess(c, "removed refresh token cookie", nil)
+}
+
 // HandleSecret handles auth middleware debugging.
 func (h *Handler) HandleSecret(c echo.Context) error {
 	userClaims, err := middleware.GetUserFromContext(c)
@@ -116,5 +138,17 @@ func (h *Handler) createTokenCookie(cookieName, token string) *http.Cookie {
 		Path:     "/",
 		Expires:  time.Now().Add(time.Duration(h.cfg.RefreshTokenValidSeconds) * time.Second),
 		MaxAge:   h.cfg.RefreshTokenValidSeconds,
+	}
+}
+
+func (h *Handler) getExpiredCookie(cookieName string) *http.Cookie {
+	return &http.Cookie{ //nolint:exhaustruct
+		Name:     cookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   h.cfg.RefreshTokenCookieSecure,
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
 	}
 }

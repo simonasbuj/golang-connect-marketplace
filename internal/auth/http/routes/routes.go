@@ -17,6 +17,7 @@ func RegisterRoutes(e *echo.Echo, h *handlers.Handler, authSvc *service.Service)
 	auth.POST("/register", h.HandleRegister)
 	auth.POST("/login", h.HandleLogin)
 	auth.POST("/refresh", h.HandleRefresh)
+	auth.POST("/logout", h.HandleLogout)
 
 	auth.GET("/secret", h.HandleSecret, middleware.AuthenticateMiddleware(authSvc))
 	auth.GET(

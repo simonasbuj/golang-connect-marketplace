@@ -135,6 +135,16 @@ func (s *Service) RefreshToken(
 	return respDto, nil
 }
 
+// Logout handles logic for logging user out by deleting refresh token.
+func (s *Service) Logout(ctx context.Context, reqDto *dto.RefreshTokenRequest) error {
+	err := s.repo.DeleteRefreshToken(ctx, reqDto.RefreshToken)
+	if err != nil {
+		return fmt.Errorf("deleting refresh token: %w", err)
+	}
+
+	return nil
+}
+
 // ParseJWT parses and validates provided jwt token string.
 func (s *Service) ParseJWT(tokenStr string) (*dto.UserClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(_ *jwt.Token) (interface{}, error) {
