@@ -151,7 +151,7 @@ func (r *listingsRepo) GetListingByID(ctx context.Context, listingID string) (*d
 						'id', i.id,
 						'listing_id', i.listing_id,
 						'path', i.path
-					)
+					) ORDER BY i.created_at
 				) FILTER (WHERE i.id IS NOT NULL),
 				'[]'
 			) AS images
@@ -260,7 +260,7 @@ func (r *listingsRepo) GetListings(
 						'id', i.id,
 						'listing_id', i.listing_id,
 						'path', i.path
-					)
+					) ORDER BY i.created_at
 				) FILTER (WHERE i.id IS NOT NULL),
 				'[]'
 			) AS images
