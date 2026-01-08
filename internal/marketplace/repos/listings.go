@@ -286,8 +286,8 @@ func (r *listingsRepo) GetListings(
 		query,
 		req.Limit,
 		req.Page*req.Limit,
-		req.CategoryFilter,
-		req.ListingFilter,
+		req.Category,
+		req.Keyword,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("fetching listings from database: %w", err)

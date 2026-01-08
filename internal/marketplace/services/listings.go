@@ -236,8 +236,8 @@ func (s *ListingsService) GetListings(
 		Meta: dto.PaginationMeta{
 			Limit:          req.Limit,
 			Page:           req.Page,
-			CategoryFilter: req.CategoryFilter,
-			ListingFilter:  req.ListingFilter,
+			Category: req.Category,
+			Keyword:  req.Keyword,
 			Total:          len(listings),
 		},
 		Listings: listings,
