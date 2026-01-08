@@ -234,11 +234,11 @@ func (s *ListingsService) GetListings(
 
 	resp := &dto.GetListingsResponse{
 		Meta: dto.PaginationMeta{
-			Limit:          req.Limit,
-			Page:           req.Page,
-			CategoryFilter: req.CategoryFilter,
-			ListingFilter:  req.ListingFilter,
-			Total:          len(listings),
+			Limit:    req.Limit,
+			Page:     req.Page,
+			Category: req.Category,
+			Keyword:  req.Keyword,
+			Total:    len(listings),
 		},
 		Listings: listings,
 	}

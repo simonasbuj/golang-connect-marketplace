@@ -112,19 +112,19 @@ type UpdateListingRequest struct {
 
 // GetListingsRequest represents payload sent when fetching a list of listings.
 type GetListingsRequest struct {
-	Limit          int     `json:"limit"           validate:"omitempty,min=1,max=100" query:"limit"`
-	Page           int     `json:"page"            validate:"omitempty,min=1"         query:"page"`
-	CategoryFilter *string `json:"category_filter" validate:"-"                       query:"category_filter"`
-	ListingFilter  *string `json:"listing_filter"  validate:"-"                       query:"listing_filter"`
+	Limit    int     `json:"limit"    validate:"omitempty,min=1,max=100" query:"limit"`
+	Page     int     `json:"page"     validate:"omitempty,min=1"         query:"page"`
+	Category *string `json:"category" validate:"-"                       query:"category"`
+	Keyword  *string `json:"keyword"  validate:"-"                       query:"keyword"`
 }
 
 // PaginationMeta represents pagination metadata sent back to the client.
 type PaginationMeta struct {
-	Limit          int     `json:"limit"`
-	Page           int     `json:"page"`
-	Total          int     `json:"total"`
-	CategoryFilter *string `json:"category_filter"`
-	ListingFilter  *string `json:"listing_filter"`
+	Limit    int     `json:"limit"`
+	Page     int     `json:"page"`
+	Total    int     `json:"total"`
+	Category *string `json:"category"`
+	Keyword  *string `json:"keyword"`
 }
 
 // GetListingsResponse represents payload sent back when fetching a list of listings.
