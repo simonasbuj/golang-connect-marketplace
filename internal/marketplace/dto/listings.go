@@ -27,10 +27,12 @@ const (
 	ListingStatusOpen ListingStatus = "open"
 	// ListingStatusCanceled indicates that the listing was canceled by the seller.
 	ListingStatusCanceled ListingStatus = "canceled"
-	// ListingStatusSold indicates that the listing has been completed (sold).
-	ListingStatusSold ListingStatus = "sold"
+	// ListingStatusSold indicates that the listing has been completed (delivered).
+	ListingStatusSold ListingStatus = "delivered"
 	// ListingStatusRefunded indicates that the listing has been refunded.
 	ListingStatusRefunded ListingStatus = "refunded"
+	// ListingStatusPaid indicates that the listing has been paid for.
+	ListingStatusPaid ListingStatus = "paid"
 )
 
 // Listing represents a marketplace listing created by a user.

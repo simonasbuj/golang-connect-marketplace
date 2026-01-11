@@ -4,9 +4,10 @@ CREATE SCHEMA IF NOT EXISTS listings;
 
 CREATE TYPE listings.listing_status AS ENUM (
     'open',
-    'sold',
+    'delivered',
     'canceled',
-    'refunded'
+    'refunded',
+    'paid'
 );
 
 CREATE TABLE IF NOT EXISTS listings.categories (
