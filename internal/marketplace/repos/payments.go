@@ -105,7 +105,7 @@ func (r *paymentsRepo) SavePayment(
 	}
 
 	updateListingQ := `
-		UPDATE listings.listings SET status = 'sold' WHERE id = $1 
+		UPDATE listings.listings SET status = 'paid' WHERE id = $1 
 	`
 
 	_, err = tx.ExecContext(ctx, updateListingQ, payment.ListingID)

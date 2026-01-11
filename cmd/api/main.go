@@ -54,6 +54,7 @@ func main() {
 
 	e := echo.New()
 	e.Static(cfg.StorageConfig.UploadDir, cfg.StorageConfig.UploadDir)
+	e.Static("/frontend", "./frontend")
 
 	e.Use(middleware.RequestLogger(logger))
 	e.Use(echoMiddleware.BodyLimit(cfg.APIConfig.MaxPayloadSize))
