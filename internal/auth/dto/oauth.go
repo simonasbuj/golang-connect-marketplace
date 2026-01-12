@@ -41,3 +41,8 @@ type GoogleUser struct {
 	FamilyName    string `json:"family_name"`
 	Picture       string `json:"picture"`
 }
+
+// OauthExchangeRequest represents payload received from oatuh exchange requests.
+type OauthExchangeRequest struct {
+	Code string `validate:"required" query:"code"`
+}

@@ -26,9 +26,11 @@ func RegisterRoutes(e *echo.Echo, h *handlers.Handler, authSvc *service.Service)
 		middleware.AuthenticateMiddleware(authSvc, dto.UserRoleAdmin),
 	)
 
-	auth.GET("/github", h.HandleGithub)
-	auth.GET("/github/callback", h.HandleGithubCallback)
+	auth.GET("/github/init", h.HandleGithubInit)
+	auth.GET("/github/callback", h.HandleOauthCallback)
+	auth.POST("/github/exchange", h.HandleGithubExchange)
 
-	auth.GET("/google", h.HandleGoogle)
-	auth.GET("/google/callback", h.HandleGoogleCallback)
+	auth.GET("/google/init", h.HandleGoogleInit)
+	auth.GET("/google/callback", h.HandleOauthCallback)
+	auth.POST("/google/exchange", h.HandleGoogleExchange)
 }
