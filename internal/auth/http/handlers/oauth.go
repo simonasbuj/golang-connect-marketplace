@@ -1,61 +1,76 @@
 package handlers
 
 import (
-	"fmt"
+	"golang-connect-marketplace/internal/auth/dto"
 	r "golang-connect-marketplace/pkg/responses"
+	"golang-connect-marketplace/pkg/validation"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
 
-// HandleGithub handles GitHub oauth request.
-func (h *Handler) HandleGithub(c echo.Context) error {
+// HandleGithubInit handles initial GitHub oauth request.
+func (h *Handler) HandleGithubInit(c echo.Context) error {
 	url := h.svc.GetGithubAuthURL()
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-// HandleGithubCallback handles GitHub oauth callback request.
-func (h *Handler) HandleGithubCallback(c echo.Context) error {
-	code := c.QueryParam("code")
-	if code == "" {
-		return r.JSONError(
-			c,
-			"missing code param in callback url",
-			fmt.Errorf("%w: code: %s", ErrURLMissingParam, "code"),
-		)
-	}
+// HandleOauthCallback handles oauth callback for all oatuh providers.
+func (h *Handler) HandleOauthCallback(c echo.Context) error {
+	var reqDto dto.OauthExchangeRequest
 
-	resp, err := h.svc.HandleGithubCallback(c.Request().Context(), code)
+	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		return r.JSONError(c, "failed to handle github oauth callback", err)
+		return r.JSONError(c, "missing exchange code", err)
 	}
 
-	return r.JSONSuccess(c, "github oauth callback handled", resp)
+	return r.JSONSuccess(c, "Oauth callback handled", reqDto.Code)
 }
 
-// HandleGoogle handles Google oauth request.
-func (h *Handler) HandleGoogle(c echo.Context) error {
+// HandleGithubExchange handles GitHub oauth code exchange for jwt token request.
+func (h *Handler) HandleGithubExchange(c echo.Context) error {
+	var reqDto dto.OauthExchangeRequest
+
+	err := validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return r.JSONError(c, "missing exchange code", err)
+	}
+
+	resp, err := h.svc.HandleGithubCallback(c.Request().Context(), reqDto.Code)
+	if err != nil {
+		return r.JSONError(c, "failed to handle github oauth exchange", err)
+	}
+
+	refreshTokenCookie := h.createRefreshTokenCookie(resp.RefreshToken)
+	c.SetCookie(refreshTokenCookie)
+
+	return r.JSONSuccess(c, "github oauth exchange handled", resp)
+}
+
+// HandleGoogleInit handles initial Google oauth request.
+func (h *Handler) HandleGoogleInit(c echo.Context) error {
 	url := h.svc.GetGoogleAuthURL()
 
 	return c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
-// HandleGoogleCallback handles Google oauth callback request.
-func (h *Handler) HandleGoogleCallback(c echo.Context) error {
-	code := c.QueryParam("code")
-	if code == "" {
-		return r.JSONError(
-			c,
-			"missing code param in callback url",
-			fmt.Errorf("%w: code: %s", ErrURLMissingParam, "code"),
-		)
-	}
+// HandleGoogleExchange handles Google oauth code exchange for jwt token request.
+func (h *Handler) HandleGoogleExchange(c echo.Context) error {
+	var reqDto dto.OauthExchangeRequest
 
-	resp, err := h.svc.HandleGoogleCallback(c.Request().Context(), code)
+	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		return r.JSONError(c, "failed to handle google oauth callback", err)
+		return r.JSONError(c, "missing exchange code", err)
 	}
 
-	return r.JSONSuccess(c, "google oauth callback handled", resp)
+	resp, err := h.svc.HandleGoogleCallback(c.Request().Context(), reqDto.Code)
+	if err != nil {
+		return r.JSONError(c, "failed to handle google oauth exchange", err)
+	}
+
+	refreshTokenCookie := h.createRefreshTokenCookie(resp.RefreshToken)
+	c.SetCookie(refreshTokenCookie)
+
+	return r.JSONSuccess(c, "google oauth exchange handled", resp)
 }
