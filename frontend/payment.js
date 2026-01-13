@@ -2,6 +2,7 @@ function paymentApp() {
     return {
         isSuccess: false,
         isError: false,
+        appUrl: "goconnectmarketplace://(tabs)/profile",
 
         async init () {
             this.checkUrlParams()

@@ -46,10 +46,8 @@
                     style="cursor: pointer; min-width: 200px; max-width: 100%; justify-content: center; word-break: break-all;"
                     x-on:click="copyCode()"
                 >
-                    <!-- Code text -->
                     <span x-text="code" class="fw-bold text-break"></span>
 
-                    <!-- Conditional icon or "Copied!" text -->
                     <span class="ms-2 text-secondary">
                         <template x-if="!copiedMessage">
                             <i class="bi bi-clipboard"></i>
@@ -62,7 +60,7 @@
             </div>
 
             <div class="d-flex justify-content-center mt-2">
-                <a href="exp://192.168.8.119:8081/--/(auth)/oauth" class="btn btn-outline-primary">
+                <a :href="appUrl" class="btn btn-outline-primary">
                     Go back to the app
                 </a>
             </div>

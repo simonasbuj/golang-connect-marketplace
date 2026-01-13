@@ -4,6 +4,7 @@ function oauthApp() {
         isError: false,
         isSuccess: false,
         copiedMessage: "",
+        appUrl: "goconnectmarketplace://(auth)/oauth",
 
         async init () {
             this.getCodeParam()
