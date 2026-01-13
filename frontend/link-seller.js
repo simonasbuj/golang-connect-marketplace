@@ -2,7 +2,7 @@ function linkSellerApp() {
     return {
         isSuccess: false,
         isError: false,
-        appUrl: "exp://192.168.1.137:8081/",
+        appUrl: "goconnectmarketplace://",
 
         async init () {
             this.checkUrlParams()
