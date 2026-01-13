@@ -2,6 +2,7 @@ function paymentApp() {
     return {
         isSuccess: false,
         isError: false,
+        appUrl: "exp://192.168.1.137:8081/--/(tabs)/profile",
 
         async init () {
             this.checkUrlParams()
