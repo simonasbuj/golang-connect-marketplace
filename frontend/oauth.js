@@ -1,10 +1,10 @@
 function oauthApp() {
     return {
-        code: null,
+        code: "",
         isError: false,
         isSuccess: false,
         copiedMessage: "",
-        appUrl: "exp://192.168.1.137:8081/",
+        appUrl: "goconnectmarketplace://(auth)/oauth-exchange?code={CODE}",
 
         async init () {
             this.getCodeParam()
@@ -19,6 +19,7 @@ function oauthApp() {
 
             if (code) {
                 this.isSuccess = true
+                this.appUrl = this.appUrl.replace("{CODE}", code)
             } else {
                 this.isError = true
             }
